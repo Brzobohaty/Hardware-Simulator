@@ -15,7 +15,10 @@ angular.module('app')
 
                 return {
                     setPlainText: setPlainText,
-                    getRows: getRows
+                    getRows: getRows,
+                    getOutputs:CompilerService.getOutputs,
+                    getInputs:CompilerService.getInputs,
+                    getName:CompilerService.getName
                 };
 
                 /**

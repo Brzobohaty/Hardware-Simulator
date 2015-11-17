@@ -19,8 +19,33 @@ angular.module('app')
                 var outputs = []; //pole výstupů (obsahuje asoc. pole: {name})
 
                 return {
-                    compile: compile
+                    compile: compile,
+                    getName : getName,
+                    getInputs : getInputs,
+                    getOutputs : getOutputs,
+                    getSimulateFunction : getSimulateFunction
                 };
+                
+                 /**
+                 * @returns {Array} výstupy chipu
+                 */
+                function getOutputs() {
+                    return outputs;
+                }
+
+                /**
+                 * @returns {Array} vstupy chipu
+                 */
+                function getInputs() {
+                    return inputs;
+                }
+
+                /**
+                 * @returns {String} název chipu
+                 */
+                function getName() {
+                    return name;
+                }
 
                 /**
                  * Zkompiluje celý obvod a případné chybové hlášky vloží přímo do daného pole
