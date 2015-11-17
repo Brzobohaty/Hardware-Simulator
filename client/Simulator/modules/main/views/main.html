@@ -1,0 +1,25 @@
+<nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#/simulator">HardwareSimulator</a>
+        </div>
+        <div>
+            <ul class="nav navbar-nav">
+                <li ng-class="{'active' : page === 'simulator'}"><a href="#/simulator"><span class="glyphicon glyphicon-play"></span>&nbsp;&nbsp;Simulator</a></li>
+                <li  ng-class="{'active' : page === 'editor'}"><a href="#/editor"><span class="glyphicon glyphicon-pencil"></span>&nbsp;&nbsp;Editor</a></li>
+                <li ng-class="{'active' : page === 'project'}"><a href="#/project"><span class="glyphicon glyphicon-folder-open"></span>&nbsp;&nbsp;Project</a></li> 
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li ng-class="{'active' : page === 'registration'}"><a href="#/registration"><span class="glyphicon glyphicon-user"></span>&nbsp;&nbsp;Sign Up</a></li>
+                <li ng-class="{'active' : page === 'login'}"><a href="#/login"><span class="glyphicon glyphicon-log-in"></span>&nbsp;&nbsp;Login</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div data-ui-view></div>
+<footer class="footer">
+    <div class="container-fluid">
+        <p class="text-muted" id="footerText">&copy; 2016, Jan Brzobohatý&nbsp;&nbsp;<a href="https://cz.linkedin.com/pub/jan-brzobohat%C3%BD/66/1b/723"><span><img src="https://static.licdn.com/scds/common/u/img/webpromo/btn_in_20x15.png" width="20" height="15" alt="Zobrazit profil uživatele Jan Brzobohatý na LinkedIn">&nbsp;View the profile</span></a></p>
+    </div>
+</footer>
+

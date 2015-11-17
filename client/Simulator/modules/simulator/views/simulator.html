@@ -1,0 +1,31 @@
+<div class="container-fluid">
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <!--<button type="button" class="btn btn-default navbar-btn">Load chip</button>-->
+        </div>
+    </nav>
+</div>
+<div gridster="gridsterOpts">
+    <ul>
+        <li gridster-item="item" ng-repeat="item in standardItems">
+            <div class="panel-heading gridsterHeading">
+                <h3 class="panel-title">{{item.name}} <span class="moveIcon glyphicon glyphicon-move"></span></h3>
+            </div>
+            <div ng-if="item.test" class="gridsterContentEnvelope">
+                <div class="monospace gridsterContent">
+                    {{test}}
+                </div>
+            </div>
+            <div ng-if="item.chipDefinition" class="gridsterContentEnvelope">
+                <div class="rowNumbers" ><span ng-class="{'hovered': i===rowNumberHover}" ng-repeat="i in [] | range:codeRowsCount">{{i}}<br></span></div>
+                <div class="gridsterContent HDLgrid">
+                    <p class="codeRow" ng-mouseenter="mouseOverRow($index+1)" ng-mouseleave="mouseOverRow(0)" ng-repeat="row in chipPlain track by $index">
+                        <span class="monospace" ng-repeat="token in row track by $index" ng-bind-html="saveBind(token)"></span>
+                        <span>&#13;&#10;</span>
+                    </p>
+                </div>
+            </div>
+        </li>
+    </ul>
+</div>
+

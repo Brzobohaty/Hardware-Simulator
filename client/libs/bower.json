@@ -1,0 +1,36 @@
+{
+  "name": "bower",
+  "homepage": "https://github.com/Brzobohaty/Test",
+  "authors": [
+    "Jan_Brzobohaty <jan.brzobohaty@tul.cz>"
+  ],
+  "description": "",
+  "main": "",
+  "moduleType": [
+    "globals"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "client/app/libs/bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "~1.4.7",
+    "angular-bootstrap": "~0.14.3",
+    "angular-ui-router": "~0.2.15",
+    "bootstrap": "~3.3.5",
+    "font-awesome": "~4.4.0",
+    "html5-boilerplate": "~5.2.0",
+    "jquery": "~2.1.4",
+    "ngstorage": "~0.3.9",
+    "angular-resource": "~1.4.7",
+    "AngularJS-Toaster": "angularjs-toaster#~0.4.16",
+    "angular-gridster": "~0.13.5",
+    "angular-loading-bar": "~0.8.0",
+    "ngFileReader": "~0.0.6"
+  }
+}
