@@ -7,101 +7,151 @@ angular.module('app')
         /**
          * Kompilátor HDL
          */
-        .factory('CompilerService', [function () {
-                var currentRow; //řádek, na kterém se zrovna kompilátor nachází
-                var allCountRows; //počet řádků kódu
-                var tokens;
-                var errors = [];
+        .factory('CompilerService', ['ParserService', function (ParserService) {
+                var tokens; //dvourozměrné pole řádků a tokenů
+                var curToken; //současný token
+                var currentRow = 0; //současné číslo řádek
+                var currentTokenOnRow = 0; //současné pořadí tokenu na řádku
+                var notTokenRegex = /^<span class=.*<\/span>$|\s+|\n/; //regex pro komentáře a bílé znaky
+                var nameRegex = /^[A-Za-z][A-Za-z0-9]*$/; //regex pro názvy chipů a pinů
+                var name; //název chipu
+                var inputs = []; //pole vstupů (obsahuje asoc. pole: {name})
+                var outputs = []; //pole výstupů (obsahuje asoc. pole: {name})
 
                 return {
-                    compile: compile,
-                    getRowsCount : getRowsCount,
-                    getErrors: getErrors
+                    compile: compile
                 };
 
-                function compile(plainText) {
-                    allCountRows = _getRowsCount(plainText);
-                    var codeWitoutComents = _clearComments(plainText);
-                    var codeCountRows = _getRowsCount(codeWitoutComents);
-                    currentRow = allCountRows-codeCountRows+1;
-                    tokens = _splitToTokens(codeWitoutComents);
-                    compileHeader();
-                    return errors;
-                }
-                
-                function getErrors(){
-                    return errors;
-                }
-                
                 /**
-                 * @returns {int} počet všech řádků kódu i s komentářema
+                 * Zkompiluje celý obvod a případné chybové hlášky vloží přímo do daného pole
+                 * @param {Array} rowsArray pole řádků s tokeny
                  */
-                function getRowsCount(){
-                    return allCountRows;
+                function compile(rowsArray) {
+                    tokens = rowsArray;
+                    _compileHeader();
+                    _compileInputs();
+                    _compileOutputs();
+                    _compileParts();
                 }
 
                 /**
-                 * Spočítá počet řádků v textu.
-                 * @param {string} text
-                 * @returns {int} počet řádků
+                 * Zkompiluje hlavičku obvodu
                  */
-                function _getRowsCount(text){
-                    var rows = 0;
-                    for (var i = 0; i < text.length; ++i){
-                        if (text[i] === '\n'){
-                            rows++;
-                        }
+                function _compileHeader() {
+                    _next();
+                    if (curToken.content !== 'CHIP') {
+                        curToken.errorMes = "Expected keyword CHIP but found " + curToken.content;
                     }
-                    return rows+1;
-                }
-
-                /**
-                 * Odstraní všechny druhy komentáře z daného kódu
-                 * @param {String} code HDL kód
-                 * @returns {String} HDL kód bez komentářů 
-                 */
-                function _clearComments(code) {
-                    var clearedText;
-                    var commentPattern = /((?:\/\*(?:[^*]|(?:\*+[^*\/]))*\*+\/)|(?:\/\/.*))/g;
-                    clearedText = code.replace(commentPattern, '');
-                    clearedText = clearedText.trim();
-                    return clearedText;
-                }
-
-                /**
-                 * Rozdělí kód na jednotlivé tokeny
-                 * @param {string} code kód v HDL
-                 * @returns {array} pole tokenů
-                 */
-                function _splitToTokens(code) {
-                    var regexp = /[ ]+|(,|;|:|=|{|}|\(|\)|\n)/g;
-                    var splited = code.split(regexp);
-
-                    return _clearArray(splited);
-                }
-
-                /**
-                 * Odstraní z pole nedefinované hodnoty nebo prázdné řetězce.
-                 * @param {array} array
-                 * @returns {array}
-                 */
-                function _clearArray(array) {
-                    for (var i = 0; i < array.length; i++) {
-                        if (array[i] === undefined || array[i] === "") {
-                            array.splice(i, 1);
-                            i--;
-                        }
+                    _next();
+                    name = expectChipName();
+                    _next();
+                    if (curToken.content !== '{') {
+                        curToken.errorMes = "Expected { but found " + curToken.content;
                     }
-                    return array;
+                    _next();
                 }
 
-                function compileHeader() {
-                    var token = tokens.shift();;
-                    if(token !== 'CHIP'){
-                        if(!errors[currentRow]){
-                            errors[currentRow] = []; 
+                /**
+                 * Zkompiluje vstupy
+                 */
+                function _compileInputs() {
+                    if (curToken.content !== 'IN') {
+                        curToken.errorMes = "Expected keyword IN but found " + curToken.content;
+                    }
+                    _next();
+                    expectPinName();
+                    _next();
+                    while (curToken.content === ',') {
+                        _next();
+                        expectPinName();
+                        _next();
+                    }
+                    expectSemicolon();
+                    _next();
+                }
+
+                /**
+                 * Zkompiluje výstupy obvodu
+                 */
+                function _compileOutputs() {
+                    if (curToken.content !== 'OUT') {
+                        curToken.errorMes = "Expected keyword OUT but found " + curToken.content;
+                    }
+                    _next();
+                    expectPinName();
+                    _next();
+                    while (curToken.content === ',') {
+                        _next();
+                        expectPinName();
+                        _next();
+                    }
+                    expectSemicolon();
+                    _next();
+                }
+
+                /**
+                 * Zkompiluje části obvodu
+                 */
+                function _compileParts() {
+                    if (curToken.content !== 'PARTS') {
+                        curToken.errorMes = "Expected keyword PARTS but found " + curToken.content;
+                    }
+                    _next();
+                    if (curToken.content !== ':') {
+                        curToken.errorMes = "Expected : but found " + curToken.content;
+                    }
+                }
+
+                /**
+                 * Zkontroluje, zda je v současném tokenu středník a pokud ne, tak uloží do tokenu chybovou hlášku.
+                 */
+                function expectSemicolon() {
+                    if (curToken.content !== ';') {
+                        curToken.errorMes = "Expected ; but found " + curToken.content;
+                    }
+                }
+
+                /**
+                 * Zkontroluje, zda je v současném tokenu validní jméno pinu a pokud ne, tak uloží do tokenu chybovou hlášku.
+                 */
+                function expectPinName() {
+                    if (!nameRegex.test(curToken.content)) {
+                        curToken.errorMes = "Expected chip pin name. And chip pin name must start with letter and can containt just letters or digits. But found " + curToken.content;
+                    }
+                }
+
+                /**
+                 * Zkontroluje, zda je v současném tokenu validní jméno chipu a pokud ne, tak uloží do tokenu chybovou hlášku.
+                 * @return {string} název obvodu
+                 */
+                function expectChipName() {
+                    if (!nameRegex.test(curToken.content)) {
+                        curToken.errorMes = "Expected chip name. And chip name must start with letter and can containt just letters or digits. But found " + curToken.content;
+                    }else{
+                        return curToken.content;
+                    }
+                    return 'Syntax error';
+                }
+
+                /**
+                 * Přeskočí všechny bílé znaky, komentáře a do současného tokenu uloží první opravdový token, který najde
+                 */
+                function _next() {
+                    if (currentTokenOnRow < tokens[currentRow].length) {
+                        currentTokenOnRow++;
+                    } else {
+                        currentRow++;
+                        currentTokenOnRow = 0;
+                    }
+
+                    for (currentRow; currentRow < tokens.length; currentRow++) {
+                        for (currentTokenOnRow; currentTokenOnRow < tokens[currentRow].length; currentTokenOnRow++) {
+                            curToken = tokens[currentRow][currentTokenOnRow];
+                            if (!notTokenRegex.test(curToken.content)) {
+                                return;
+                            }
                         }
-                        errors[currentRow].push("Expected CHIP but found "+token);
+                        currentTokenOnRow = 0;
                     }
                 }
             }]);

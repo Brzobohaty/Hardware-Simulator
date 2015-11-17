@@ -17,11 +17,19 @@
                 </div>
             </div>
             <div ng-if="item.chipDefinition" class="gridsterContentEnvelope">
-                <div class="rowNumbers" ><span ng-class="{'hovered': i===rowNumberHover}" ng-repeat="i in [] | range:codeRowsCount">{{i}}<br></span></div>
+                <div class="rowNumbers" >
+                    <span ng-class="{'hovered': $index+1===rowNumberHover}" ng-repeat="row in rowsArray track by $index"
+                          uib-popover="{{errorsFromRow=renderErrorsFromRow(row);errorsFromRow}}" popover-trigger="mouseenter" popover-placement="right">
+                        <span ng-show="!errorsFromRow">{{$index+1}}<br></span>
+                        <span ng-show="errorsFromRow"><img src="/Simulator/images/error.ico" alt="er"><br></span>
+                    </span>
+                </div>
                 <div class="gridsterContent HDLgrid">
-                    <p class="codeRow" ng-mouseenter="mouseOverRow($index+1)" ng-mouseleave="mouseOverRow(0)" ng-repeat="row in chipPlain track by $index">
-                        <span class="monospace" ng-repeat="token in row track by $index" ng-bind-html="saveBind(token)"></span>
-                        <span>&#13;&#10;</span>a
+                    <p class="codeRow" ng-mouseenter="mouseOverRow($index+1)" ng-mouseleave="mouseOverRow(0)" ng-repeat="row in rowsArray track by $index">
+                        <span class="monospace" ng-repeat="token in row track by $index" ng-bind-html="saveBind(token.content)"
+                              ng-class="{'keywords':isKeyword(token.content), 'compileError':token.errorMes}"
+                              uib-popover="{{token.errorMes}}" popover-trigger="mouseenter" popover-placement="right"></span>
+                        <span>&#13;&#10;</span>
                     </p>
                 </div>
             </div>

@@ -149,6 +149,7 @@ body{
 
 .rowNumbers span{
     display: block;
+    text-align: right;
 }
 
 .rowNumbers span.hovered{
@@ -161,4 +162,35 @@ body{
 
 .comment{
     color: #7E7E82;
+}
+
+.compileError{
+/*    display: inline-block;
+    position:relative;
+    background: url(/Simulator/images/underline.gif) bottom repeat-x;*/
+    background-color: rgba(255, 0, 0, 0.63);
+}
+
+.popover-content{
+    white-space: pre-wrap;
+}
+
+.gridster-item .handle-e{
+    width: 8px;
+    right: -6px;
+}
+
+.gridster-item .handle-w{
+    width: 8px;
+    left: -6px;
+}
+
+.gridster-item .handle-s{
+    height: 8px;
+    bottom: -6px;
+}
+
+.gridster-item .handle-n{
+    height: 8px;
+    top: -6px;
 }
