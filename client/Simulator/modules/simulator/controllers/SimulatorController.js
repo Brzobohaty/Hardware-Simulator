@@ -34,18 +34,12 @@ angular.module('app.simulator')
                 $scope.parts = ChipModel.getParts();
                 $scope.inputs = ChipModel.getInputs();
                 $scope.outputs = ChipModel.getOutputs();
-                
-                $scope.outputs[0].value = compute();
 
                 //přiřazení funkcí
                 $scope.mouseOverRow = mouseOverRow;
                 $scope.saveBind = $sce.trustAsHtml;
                 $scope.renderErrorsFromRow = renderErrorsFromRow;
                 $scope.isKeyword = ParserService.isKeyWord;
-
-                function compute() {
-                    return $scope.inputs[0].value + $scope.inputs[1].value;
-                }
 
                 /**
                  * Funkce při přejetí myši přes řádek.

@@ -18,6 +18,7 @@ angular.module('app')
                 var inputs = []; //pole vstupů (obsahuje asoc. pole: {name})
                 var outputs = []; //pole výstupů (obsahuje asoc. pole: {name})
                 var parts = []; //pole částí obvodu (obsahuje asociativní pole: {name, inputs, outputs})
+                var internalPins = {}; //mapa interních pinů, včetně vstupních a výstupních
 
                 return {
                     compile: compile,
@@ -47,11 +48,11 @@ angular.module('app')
                 function getName() {
                     return name;
                 }
-                
+
                 /**
                  * @returns {Array} pole částí obvodu
                  */
-                function getParts(){
+                function getParts() {
                     return parts;
                 }
 
@@ -63,9 +64,28 @@ angular.module('app')
                 function compile(rowsArray) {
                     tokens = rowsArray;
                     if (_compileHeader() && _compileInputs() && _compileOutputs() && _compileParts()) {
+                        _setOutputFunctions();
                         return true;
                     }
                     return false;
+                }
+
+                //TODO
+                function _setOutputFunctions() {
+                    //vložení inutů do mapy
+                    for(var i=0; i<inputs.length; i++){
+                        internalPins[inputs[i].name] = inputs[i];
+                    }
+                    //vložení outputů do mapy
+                    //nevim jestli je správná cesta
+                    for(var i=0; i<outputs.length; i++){
+                        internalPins[outputs[i].name] = outputs[i];
+                    }
+                    
+                    //tady ta funkce by se měla volat při jakékoli změně vstupu a ne pro každý výstup zvlášť
+                    outputs[0].value = function(){
+                        return 10 + internalPins['a'].value*2;;
+                    };
                 }
 
                 /**
@@ -102,14 +122,14 @@ angular.module('app')
                     if (!(pinName = expectPinName())) {
                         return false;
                     }
-                    inputs.push({'name':pinName});
+                    inputs.push({'name': pinName, 'value': 0});
                     _next();
                     while (curToken.content === ',') {
                         _next();
                         if (!(pinName = expectPinName())) {
                             return false;
                         }
-                        inputs.push({'name':pinName});
+                        inputs.push({'name': pinName, 'value': 0});
                         _next();
                     }
                     if (!expectChar(';')) {
@@ -132,14 +152,14 @@ angular.module('app')
                     if (!(pinName = expectPinName())) {
                         return false;
                     }
-                    outputs.push({'name':pinName});
+                    outputs.push({'name': pinName});
                     _next();
                     while (curToken.content === ',') {
                         _next();
                         if (!(pinName = expectPinName())) {
                             return false;
                         }
-                        outputs.push({'name':pinName});
+                        outputs.push({'name': pinName});
                         _next();
                     }
                     if (!expectChar(';')) {
@@ -183,9 +203,9 @@ angular.module('app')
                 function expectPart() {
                     var chip =
                             {
-                                'name' : '',
-                                'inputs' : {},
-                                'outputs' : {}
+                                'name': '',
+                                'inputs': {},
+                                'outputs': {}
                             };
                     //TODO tady by se mělo kontrolovat zda takovej obvod existuje
                     if (!(chip.name = expectChipName())) {
@@ -250,7 +270,7 @@ angular.module('app')
                     if (!nameRegex.test(curToken.content)) {
                         curToken.errorMes = "Expected chip pin name. And chip pin name must start with letter and can containt just letters or digits. But found " + curToken.content;
                         return false;
-                    }else{
+                    } else {
                         return curToken.content;
                     }
                 }

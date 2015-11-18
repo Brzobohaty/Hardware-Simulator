@@ -49,7 +49,7 @@
                             <label ng-repeat="output in outputs">{{output.name}}:</label>
                         </div>
                         <div class="inputs">
-                            <input disabled="true" ng-repeat="output in outputs track by $index" type="number" min="0" class="form-control" name="input{{$index}}" ng-model="output.value">
+                            <input disabled="true" ng-repeat="output in outputs track by $index" type="number" min="0" class="form-control" name="input{{$index}}" ng-value="output.value" >
                         </div>
                     </div>
                 </div>
