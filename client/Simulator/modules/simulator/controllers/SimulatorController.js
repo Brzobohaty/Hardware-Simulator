@@ -9,9 +9,10 @@ angular.module('app.simulator')
                 $rootScope.page = 'simulator';
 
                 $scope.standardItems = [
-                    {sizeX: 2, sizeY: 2, row: 0, col: 0, name: 'HDL', chipDefinition: true},
-                    {sizeX: 1, sizeY: 1, row: 0, col: 2, name: 'Inputs', test: true},
-                    {sizeX: 1, sizeY: 1, row: 0, col: 3, name: 'Outputs', test: true}
+                    {sizeX: 2, sizeY: 2, row: 0, col: 0, name: 'HDL'},
+                    {sizeX: 1, sizeY: 1, row: 0, col: 2, name: 'Input pins'},
+                    {sizeX: 1, sizeY: 1, row: 0, col: 3, name: 'Output pins'},
+                    {sizeX: 1, sizeY: 1, row: 0, col: 4, name: 'Internal pins'}
                 ];
 
                 //nastavení gridsteru
@@ -26,16 +27,25 @@ angular.module('app.simulator')
                 };
 
                 //pro testování ....... smazat
-                ChipModel.setPlainText("// This file is part of www.nand2tetris.org\n// and the book \"The Elements of Computing Systems\"\n// by Nisan and Schocken, MIT Press.\n// File name: projects/01/Xor.hdl\n\n/**\n *  Exclusive-or gate: out = !(a == b).\n */\n\n/** \n*/\nCHI Xor {\n    IN a, b;\n    OUT out;\n\n    PARTS:\n    Not(in=b,out=bn);\n    And(a=a, b=bn, out=ab);\n    Not(in=a,out=an);\n    And(a=an, b=b, out=ba);\n    Or(a=ab ,b=ba ,out=out );\n}");
+                $scope.compileError = !ChipModel.setPlainText("// This file is part of www.nand2tetris.org\n// and the book \"The Elements of Computing Systems\"\n// by Nisan and Schocken, MIT Press.\n// File name: projects/01/Xor.hdl\n\n/**\n *  Exclusive-or gate: out = !(a == b).\n */\n\n/** \n*/\nCHIP Xor {\n    IN a, b;\n    OUT out;\n\n    PARTS:\n    Not(in=b,out=bn);\n    And(a=a, b=bn, out=ab);\n    Not(in=a,out=an);\n    And(a=an, b=b, out=ba);\n    Or(a=ab ,b=ba ,out=out );\n}");
 
                 $scope.rowsArray = ChipModel.getRows();
                 $scope.chipName = ChipModel.getName();
+                $scope.parts = ChipModel.getParts();
+                $scope.inputs = ChipModel.getInputs();
+                $scope.outputs = ChipModel.getOutputs();
+                
+                $scope.outputs[0].value = compute();
 
                 //přiřazení funkcí
                 $scope.mouseOverRow = mouseOverRow;
                 $scope.saveBind = $sce.trustAsHtml;
                 $scope.renderErrorsFromRow = renderErrorsFromRow;
                 $scope.isKeyword = ParserService.isKeyWord;
+
+                function compute() {
+                    return $scope.inputs[0].value + $scope.inputs[1].value;
+                }
 
                 /**
                  * Funkce při přejetí myši přes řádek.
@@ -53,7 +63,7 @@ angular.module('app.simulator')
                 function renderErrorsFromRow(row) {
                     var errors = '';
                     for (var i = 0; i < row.length; i++) {
-                        if(errors.length>0 && row[i].errorMes){
+                        if (errors.length > 0 && row[i].errorMes) {
                             errors += '\n\n';
                         }
                         if (row[i].errorMes) {

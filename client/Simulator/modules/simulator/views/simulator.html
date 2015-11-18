@@ -1,7 +1,8 @@
 <div class="container-fluid">
     <nav class="navbar navbar-default">
         <div class="container-fluid">
-            <a class="navbar-brand normalCursor" href="javascript:void(0);">{{chipName}}</a>
+            <a ng-show="!compileError" class="navbar-brand normalCursor" href="javascript:void(0);">{{chipName}}</a>
+            <a ng-show="compileError" class="navbar-brand normalCursor compileError" href="javascript:void(0);">Compile error</a>
             <!--<button type="button" class="btn btn-default navbar-btn">Load chip</button>-->
         </div>
     </nav>
@@ -12,26 +13,50 @@
             <div class="panel-heading gridsterHeading">
                 <h3 class="panel-title">{{item.name}} <span class="moveIcon glyphicon glyphicon-move"></span></h3>
             </div>
-            <div ng-if="item.test" class="gridsterContentEnvelope">
-                <div class="monospace gridsterContent">
-                    {{test}}
-                </div>
-            </div>
-            <div ng-if="item.chipDefinition" class="gridsterContentEnvelope">
+            <div ng-if="item.name === 'HDL'" class="gridsterContentEnvelope">
                 <div class="rowNumbers" >
-                    <span ng-class="{'hovered': $index+1===rowNumberHover}" ng-repeat="row in rowsArray track by $index"
-                          uib-popover="{{errorsFromRow=renderErrorsFromRow(row);errorsFromRow}}" popover-trigger="mouseenter" popover-placement="right">
-                        <span ng-show="!errorsFromRow">{{$index+1}}<br></span>
+                    <span ng-class="{'hovered': $index + 1 === rowNumberHover}" ng-repeat="row in rowsArray track by $index"
+                          uib-popover="{{errorsFromRow = renderErrorsFromRow(row);errorsFromRow}}" popover-trigger="mouseenter" popover-placement="right">
+                        <span ng-show="!errorsFromRow">{{$index + 1}}<br></span>
                         <span ng-show="errorsFromRow"><img src="/Simulator/images/error.ico" alt="er"><br></span>
                     </span>
                 </div>
                 <div class="gridsterContent HDLgrid">
-                    <p class="codeRow" ng-mouseenter="mouseOverRow($index+1)" ng-mouseleave="mouseOverRow(0)" ng-repeat="row in rowsArray track by $index">
+                    <p class="codeRow" ng-mouseenter="mouseOverRow($index + 1)" ng-mouseleave="mouseOverRow(0)" ng-repeat="row in rowsArray track by $index">
                         <span class="monospace" ng-repeat="token in row track by $index" ng-bind-html="saveBind(token.content)"
                               ng-class="{'keywords':isKeyword(token.content), 'compileError':token.errorMes}"
                               uib-popover="{{token.errorMes}}" popover-trigger="mouseenter" popover-placement="right"></span>
-                        <span ng-show="row.length===0">&#13;&#10;</span>
+                        <span ng-show="row.length === 0">&#13;&#10;</span>
                     </p>
+                </div>
+            </div>
+            <div ng-if="item.name === 'Input pins'" class="gridsterContentEnvelope">
+                <div class="gridsterContent  panel-body">
+                    <div class="form-group myFormGroup">
+                        <div class="labels">
+                            <label ng-repeat="input in inputs">{{input.name}}:</label>
+                        </div>
+                        <div class="inputs">
+                            <input ng-repeat="input in inputs track by $index" type="number" min="0" class="form-control" name="input{{$index}}" ng-model="input.value">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div ng-if="item.name === 'Output pins'" class="gridsterContentEnvelope">
+                <div class="gridsterContent  panel-body">
+                    <div class="form-group myFormGroup">
+                        <div class="labels">
+                            <label ng-repeat="output in outputs">{{output.name}}:</label>
+                        </div>
+                        <div class="inputs">
+                            <input disabled="true" ng-repeat="output in outputs track by $index" type="number" min="0" class="form-control" name="input{{$index}}" ng-model="output.value">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div ng-if="item.name === 'Internal pins'" class="gridsterContentEnvelope">
+                <div class="gridsterContent  panel-body">
+                    {{parts}}
                 </div>
             </div>
         </li>

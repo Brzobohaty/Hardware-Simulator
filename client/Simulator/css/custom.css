@@ -196,3 +196,32 @@ body{
     height: 8px;
     top: -6px;
 }
+
+.myFormGroup{
+    white-space: nowrap;
+}
+
+.myFormGroup .labels{
+    float: left;
+    display: inline-block;
+    text-align: right;
+    padding-top: 5px;
+    padding-right: 5px;
+}
+
+.myFormGroup .inputs{
+    display: inline-block;
+    width: 100px;
+    margin-right: 10px;
+}
+
+.myFormGroup .inputs input{
+    height: 32px;
+    margin-bottom: 10px;
+}
+
+.myFormGroup .labels label{
+    display: block;
+    height: 32px;
+    margin-bottom: 10px;
+}

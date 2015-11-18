@@ -17,16 +17,17 @@ angular.module('app')
                 var name; //název chipu
                 var inputs = []; //pole vstupů (obsahuje asoc. pole: {name})
                 var outputs = []; //pole výstupů (obsahuje asoc. pole: {name})
+                var parts = []; //pole částí obvodu (obsahuje asociativní pole: {name, inputs, outputs})
 
                 return {
                     compile: compile,
-                    getName : getName,
-                    getInputs : getInputs,
-                    getOutputs : getOutputs,
-                    getSimulateFunction : getSimulateFunction
+                    getName: getName,
+                    getInputs: getInputs,
+                    getOutputs: getOutputs,
+                    getParts: getParts
                 };
-                
-                 /**
+
+                /**
                  * @returns {Array} výstupy chipu
                  */
                 function getOutputs() {
@@ -46,116 +47,251 @@ angular.module('app')
                 function getName() {
                     return name;
                 }
+                
+                /**
+                 * @returns {Array} pole částí obvodu
+                 */
+                function getParts(){
+                    return parts;
+                }
 
                 /**
                  * Zkompiluje celý obvod a případné chybové hlášky vloží přímo do daného pole
                  * @param {Array} rowsArray pole řádků s tokeny
+                 * @return {boolean} false pokud nastala chyba při kompilaci
                  */
                 function compile(rowsArray) {
                     tokens = rowsArray;
-                    _compileHeader();
-                    _compileInputs();
-                    _compileOutputs();
-                    _compileParts();
+                    if (_compileHeader() && _compileInputs() && _compileOutputs() && _compileParts()) {
+                        return true;
+                    }
+                    return false;
                 }
 
                 /**
                  * Zkompiluje hlavičku obvodu
+                 * @return {boolean} false pokud nastala chyba při kompilaci
                  */
                 function _compileHeader() {
                     _next();
-                    if (curToken.content !== 'CHIP') {
-                        curToken.errorMes = "Expected keyword CHIP but found " + curToken.content;
+                    if (!expectKeyword('CHIP')) {
+                        return false;
                     }
                     _next();
-                    name = expectChipName();
-                    _next();
-                    if (curToken.content !== '{') {
-                        curToken.errorMes = "Expected { but found " + curToken.content;
+                    if (!(name = expectChipName())) {
+                        return false;
                     }
                     _next();
+                    if (!expectChar('{')) {
+                        return false;
+                    }
+                    _next();
+                    return true;
                 }
 
                 /**
                  * Zkompiluje vstupy
+                 * @return {boolean} false pokud nastala chyba při kompilaci
                  */
                 function _compileInputs() {
-                    if (curToken.content !== 'IN') {
-                        curToken.errorMes = "Expected keyword IN but found " + curToken.content;
+                    var pinName;
+                    if (!expectKeyword('IN')) {
+                        return false;
                     }
                     _next();
-                    expectPinName();
+                    if (!(pinName = expectPinName())) {
+                        return false;
+                    }
+                    inputs.push({'name':pinName});
                     _next();
                     while (curToken.content === ',') {
                         _next();
-                        expectPinName();
+                        if (!(pinName = expectPinName())) {
+                            return false;
+                        }
+                        inputs.push({'name':pinName});
                         _next();
                     }
-                    expectSemicolon();
+                    if (!expectChar(';')) {
+                        return false;
+                    }
                     _next();
+                    return true;
                 }
 
                 /**
                  * Zkompiluje výstupy obvodu
+                 * @return {boolean} false pokud nastala chyba při kompilaci
                  */
                 function _compileOutputs() {
-                    if (curToken.content !== 'OUT') {
-                        curToken.errorMes = "Expected keyword OUT but found " + curToken.content;
+                    var pinName;
+                    if (!expectKeyword('OUT')) {
+                        return false;
                     }
                     _next();
-                    expectPinName();
+                    if (!(pinName = expectPinName())) {
+                        return false;
+                    }
+                    outputs.push({'name':pinName});
                     _next();
                     while (curToken.content === ',') {
                         _next();
-                        expectPinName();
+                        if (!(pinName = expectPinName())) {
+                            return false;
+                        }
+                        outputs.push({'name':pinName});
                         _next();
                     }
-                    expectSemicolon();
+                    if (!expectChar(';')) {
+                        return false;
+                    }
                     _next();
+                    return true;
                 }
 
                 /**
                  * Zkompiluje části obvodu
+                 * @return {boolean} false pokud nastala chyba při kompilaci
                  */
                 function _compileParts() {
-                    if (curToken.content !== 'PARTS') {
-                        curToken.errorMes = "Expected keyword PARTS but found " + curToken.content;
+                    if (!expectKeyword('PARTS')) {
+                        return false;
                     }
                     _next();
-                    if (curToken.content !== ':') {
-                        curToken.errorMes = "Expected : but found " + curToken.content;
+                    if (!expectChar(':')) {
+                        return false;
                     }
+                    _next();
+                    if (!expectPart()) {
+                        return false;
+                    }
+                    _next();
+                    while (curToken.content !== '}') {
+                        if (!expectPart()) {
+                            return false;
+                        }
+                        _next();
+                    }
+                    return true;
                 }
 
                 /**
-                 * Zkontroluje, zda je v současném tokenu středník a pokud ne, tak uloží do tokenu chybovou hlášku.
+                 * Zkontroluje, zda následující sekvence tokenů představuje deklaraci části obvodu.
+                 * Pokud ne, tak uloží do tokenu chybovou hlášku.
+                 * @return {boolean} false pokud nastala chyba při kompilaci
                  */
-                function expectSemicolon() {
-                    if (curToken.content !== ';') {
-                        curToken.errorMes = "Expected ; but found " + curToken.content;
+                function expectPart() {
+                    var chip =
+                            {
+                                'name' : '',
+                                'inputs' : {},
+                                'outputs' : {}
+                            };
+                    //TODO tady by se mělo kontrolovat zda takovej obvod existuje
+                    if (!(chip.name = expectChipName())) {
+                        return false;
                     }
+                    _next();
+                    if (!expectChar('(')) {
+                        return false;
+                    }
+                    _next();
+                    if (!expectPinAssignment(chip)) {
+                        return false;
+                    }
+                    _next();
+                    while (curToken.content === ',') {
+                        _next();
+                        if (!expectPinAssignment(chip)) {
+                            return false;
+                        }
+                        _next();
+                    }
+                    if (!expectChar(')')) {
+                        return false;
+                    }
+                    _next();
+                    if (!expectChar(';')) {
+                        return false;
+                    }
+                    parts.push(chip);
+                    return true;
+                }
+
+                /**
+                 * Zkontroluje, zda následující sekvence tokenů představuje přiřazení pinů.
+                 * Pokud ne, tak uloží do tokenu chybovou hlášku.
+                 * @param {object} chip definice chipu
+                 * @return {boolean} false pokud nastala chyba při kompilaci
+                 */
+                function expectPinAssignment(chip) {
+                    var pinNameLeft;
+                    var pinNameRight;
+                    if (!(pinNameLeft = expectPinName())) {
+                        return false;
+                    }
+                    _next();
+                    if (!expectChar('=')) {
+                        return false;
+                    }
+                    _next();
+                    if (!(pinNameRight = expectPinName())) {
+                        return false;
+                    }
+                    chip.inputs[pinNameLeft] = pinNameRight;
+                    return true;
                 }
 
                 /**
                  * Zkontroluje, zda je v současném tokenu validní jméno pinu a pokud ne, tak uloží do tokenu chybovou hlášku.
+                 * @return {string/boolean} false pokud nastala chyba při kompilaci, jinak název pinu
                  */
                 function expectPinName() {
                     if (!nameRegex.test(curToken.content)) {
                         curToken.errorMes = "Expected chip pin name. And chip pin name must start with letter and can containt just letters or digits. But found " + curToken.content;
+                        return false;
+                    }else{
+                        return curToken.content;
                     }
                 }
 
                 /**
                  * Zkontroluje, zda je v současném tokenu validní jméno chipu a pokud ne, tak uloží do tokenu chybovou hlášku.
-                 * @return {string} název obvodu
+                 * @return {string/boolean} false pokud nastala chyba při kompilaci, jinak název obvodu
                  */
                 function expectChipName() {
                     if (!nameRegex.test(curToken.content)) {
                         curToken.errorMes = "Expected chip name. And chip name must start with letter and can containt just letters or digits. But found " + curToken.content;
-                    }else{
+                        return false;
+                    } else {
                         return curToken.content;
                     }
-                    return 'Syntax error';
+                }
+
+                /**
+                 * Zkontroluje, zda je v současném tokenu daný znak a pokud ne, tak uloží do tokenu chybovou hlášku.
+                 * @param {string} char znak
+                 * @return {boolean} false pokud nastala chyba při kompilaci
+                 */
+                function expectChar(char) {
+                    if (curToken.content !== char) {
+                        curToken.errorMes = "Expected " + char + " but found " + curToken.content;
+                        return false;
+                    }
+                    return true;
+                }
+
+                /**
+                 * Zkontroluje, zda je v současném tokenu dané klíčové slovo a pokud ne, tak uloží do tokenu chybovou hlášku.
+                 * @param {string} keyword očekávané klíčové slovo
+                 * @return {boolean} false pokud nastala chyba při kompilaci
+                 */
+                function expectKeyword(keyword) {
+                    if (curToken.content !== keyword) {
+                        curToken.errorMes = "Expected " + keyword + " but found " + curToken.content;
+                        return false;
+                    }
+                    return true;
                 }
 
                 /**

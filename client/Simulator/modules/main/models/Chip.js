@@ -18,7 +18,8 @@ angular.module('app')
                     getRows: getRows,
                     getOutputs:CompilerService.getOutputs,
                     getInputs:CompilerService.getInputs,
-                    getName:CompilerService.getName
+                    getName:CompilerService.getName,
+                    getParts:CompilerService.getParts
                 };
 
                 /**
@@ -35,6 +36,6 @@ angular.module('app')
                 function setPlainText(plainTextt) {
                     plainText = plainTextt;
                     rowsArray = ParserService.parsePlainTextToRowsOfTokens(plainText);
-                    CompilerService.compile(rowsArray);
+                    return CompilerService.compile(rowsArray);
                 }
             }]);
