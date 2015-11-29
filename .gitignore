@@ -30,5 +30,6 @@ node_modules
 /custom-config.conf
 /client/libs/bower_components
 /client/libs/plugins
-/server/node_modules
+/node_modules
 /Guardfile
+/nodemon.json

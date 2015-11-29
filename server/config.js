@@ -1,5 +1,4 @@
 var path = require('path');
-var parseConf = require("../sys/parse-conf");
 
 /**
  * Připojení k databázi
@@ -7,15 +6,7 @@ var parseConf = require("../sys/parse-conf");
 function connectToDB() {
     var mongoose = require('mongoose');
 
-    var configData = parseConf("custom-config.conf");
-    var connectionString;
-    if (configData["mongoDB-user"] && configData["mongoDB-pass"]) {
-        connectionString = 'mongodb://' + configData["mongoDB-user"] + ':' + configData["mongoDB-pass"] + '@' + configData["mongoDB-host"] + ':' + configData["mongoDB-port"] + '/' + configData["mongoDB-db"];
-    } else {
-        connectionString = 'mongodb://' + configData["mongoDB-host"] + ':' + configData["mongoDB-port"] + '/' + configData["mongoDB-db"];
-    }
-
-    mongoose.connect(connectionString, function (err) {
+    mongoose.connect(process.env.MONGOLAB_URI || 'mongodb://localhost:27017/simulator', function (err) {
         if (err) {
             console.log('connection error', err);
         } else {
@@ -64,8 +55,7 @@ function setUpMiddleWare(app) {
 }
 
 module.exports = {
-    //klíč serveru k vytvoření unikátního tokenu pro každého uživatele
-    JWT_SECRET: 'ba51d54wq4d54wqdas4d5sa4d',
+    JWT_SECRET: 'ba51d54wq4d54wqdas4d5sa4d', //klíč serveru k vytvoření unikátního tokenu pro každého uživatele
     connectToDB: connectToDB,
     setUpViewEngine: setUpViewEngine,
     setUpMiddleWare: setUpMiddleWare

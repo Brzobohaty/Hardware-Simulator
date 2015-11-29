@@ -5,7 +5,7 @@
  */
 
 var app = require('../server/app.js');
-var debug = require('../server/node_modules/debug')('sample:server');
+var debug = require('../node_modules/debug')('sample:server');
 var http = require('http');
 var fs = require('fs');
 
@@ -13,7 +13,7 @@ var fs = require('fs');
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.argv[2] || '3000');
+var port = normalizePort(process.env.PORT || process.argv[2] || '3000');
 app.set('port', port);
 
 /**
