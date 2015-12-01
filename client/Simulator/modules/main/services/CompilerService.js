@@ -17,7 +17,7 @@ angular.module('app')
                 var name; //název chipu
                 var inputs = []; //pole vstupů (obsahuje asoc. pole: {name})
                 var outputs = []; //pole výstupů (obsahuje asoc. pole: {name})
-                var parts = []; //pole částí obvodu (obsahuje asociativní pole: {name, inputs, outputs})
+                var parts = []; //pole částí obvodu (obsahuje asociativní pole: {name, pins})
                 var internalPins = {}; //mapa interních pinů, včetně vstupních a výstupních
 
                 return {
@@ -59,7 +59,7 @@ angular.module('app')
                 /**
                  * Zkompiluje celý obvod a případné chybové hlášky vloží přímo do daného pole
                  * @param {Array} rowsArray pole řádků s tokeny
-                 * @return {boolean} false pokud nastala chyba při kompilaci
+                 * @return {boolean} true pokud nastala chyba při kompilaci
                  */
                 function compile(rowsArray) {
                     tokens = rowsArray;
@@ -72,20 +72,152 @@ angular.module('app')
 
                 //TODO
                 function _setOutputFunctions() {
-                    //vložení inutů do mapy
-                    for(var i=0; i<inputs.length; i++){
+                    //vložení inputů do mapy
+                    for (var i = 0; i < inputs.length; i++) {
                         internalPins[inputs[i].name] = inputs[i];
                     }
+
                     //vložení outputů do mapy
-                    //nevim jestli je správná cesta
-                    for(var i=0; i<outputs.length; i++){
+                    for (var i = 0; i < outputs.length; i++) {
                         internalPins[outputs[i].name] = outputs[i];
                     }
+
+                    //vložení interních pinů do mapy
+                    for (var i = 0; i < parts.length; i++) {
+                        for (var property in parts[i].pins) {
+                            if (parts[i].pins.hasOwnProperty(property)) {
+                                if (!internalPins[parts[i].pins[property]]) {
+                                    internalPins[parts[i].pins[property]] = {
+                                        name: parts[i].pins[property],
+                                        value: 0,
+                                        callbacks: []
+                                    };
+                                }
+                            }
+                        }
+                    }
                     
-                    //tady ta funkce by se měla volat při jakékoli změně vstupu a ne pro každý výstup zvlášť
-                    outputs[0].value = function(){
-                        return 10 + internalPins['a'].value*2;;
+                    
+
+                    /**
+                     * Object představující jeden chip
+                     * @param {String} name
+                     * @param {object} inputs obsahuje pouze proměnné, které představují hodnoty na vstupu 
+                     * @param {object} outputs obsahuje pouze proměnné, které představují hodnoty na výstupu
+                     * @param {function} computeFcn
+                     */
+                    var Chip = function (name, inputs, outputs, computeFcn) {
+                        this.name = name; //jméno chipu
+                        this._compute = computeFcn; //výpočetní funkce chipu
+                        this.inputs = inputs;
+                        this.outputs = outputs;
+                        
                     };
+                    Chip.prototype = {
+                        /**
+                         * TODO
+                         */
+                        setPins : function (pins, partMap) {
+                            for (var pinName in partMap.pins) {
+                                if (this.inputs.hasOwnProperty(pinName)) {
+                                    if (!this.inputs[pinName].used) {
+                                        this.inputs[pinName] = pins[partMap.pins[pinName]];
+                                        this.inputs[pinName].used = true;
+                                        partMap.pins[pinName] = pins[partMap.pins[pinName]];
+                                    } else {
+                                        return 'Pin ' + pinName + ' má přiřazenu hodnotu podruhé.';
+                                    }
+                                } else if (this.outputs.hasOwnProperty(pinName)) {
+                                    if (!this.outputs[pinName].used) {
+                                        this.outputs[pinName] = pins[partMap.pins[pinName]];
+                                        this.outputs[pinName].used = true;
+                                        partMap.pins[pinName] = pins[partMap.pins[pinName]];
+                                    } else {
+                                        return 'Pin ' + pinName + ' má přiřazenu hodnotu podruhé.';
+                                    }
+                                } else {
+                                    return 'Obvod ' + partMap.name + ' nemá pin s názvem ' + pinName;
+                                }
+                            }
+                            if (this._allUsed()) {
+                                this._compute();
+                                this._setListener();
+                                return 'nenastala chyba';
+
+                            } else {
+                                return 'nevyužité všechny piny';
+                            }
+                        },
+                        
+                        /**
+                         * Nastaví listener pro vstupy tohoto obvodu 
+                         * (při každé změně vstupu vypočítá hodnotu na výstupu a 
+                         * zavolá callbacky napojené na výstupní pin)
+                         */
+                        _setListener : function () {
+                            var chip = this;
+                            for (var inputName in this.inputs) {
+                                this.inputs[inputName].callbacks.push(function () {
+                                    chip._compute();
+                                    chip._runOutputCallbacks();
+                                });
+                            }
+                        },
+                        
+                        /**
+                         * Zavolá callbacky napojené na výstupní pin
+                         */
+                        _runOutputCallbacks : function () {
+                            for (var outputName in this.outputs) {
+                                for (var i = 0; i < this.outputs[outputName].callbacks.length; i++) {
+                                    this.outputs[outputName].callbacks[i]();
+                                }
+                            }
+                        },
+                        
+                        /**
+                         * Zkontroluje zda mají všechny piny příznak "used" na true respektive, zda byly použity
+                         * @returns {Boolean} true pokud jsou všechny piny použity
+                         */
+                        _allUsed : function () {
+                            for (var pinName in this.inputs) {
+                                if (!this.inputs[pinName].used) {
+                                    return false;
+                                }
+                            }
+                            for (var pinName in this.outputs) {
+                                if (!this.outputs[pinName].used) {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        }
+                    };
+
+                    var not1 = new Chip('NOT', {'in': {value: 0}}, {'out': {value: 1}}, function () {
+                        this.outputs['out'].value = !this.inputs['in'].value;
+                    });
+                    console.log(not1.setPins(internalPins, parts[0]));
+
+                    var not2 = new Chip('NOT', {'in': {value: 0}}, {'out': {value: 1}}, function () {
+                        this.outputs['out'].value = !this.inputs['in'].value;
+                    });
+                    console.log(not2.setPins(internalPins, parts[2]));
+
+                    var and1 = new Chip('AND', {'a': {value: 0}, 'b': {value: 0}}, {'out': {value: 0}}, function () {
+                        this.outputs['out'].value = this.inputs['a'].value & this.inputs['b'].value;
+                    });
+                    console.log(and1.setPins(internalPins, parts[1]));
+
+                    var and2 = new Chip('AND', {'a': {value: 0}, 'b': {value: 0}}, {'out': {value: 0}}, function () {
+                        this.outputs['out'].value = this.inputs['a'].value & this.inputs['b'].value;;
+                    });
+                    console.log(and2.setPins(internalPins, parts[3]));
+
+                    var or = new Chip('OR', {'a': {value: 0}, 'b': {value: 0}}, {'out': {value: 0}}, function () {
+                        this.outputs['out'].value = this.inputs['a'].value | this.inputs['b'].value;
+                    });
+                    console.log(or.setPins(internalPins, parts[4]));
                 }
 
                 /**
@@ -122,14 +254,14 @@ angular.module('app')
                     if (!(pinName = expectPinName())) {
                         return false;
                     }
-                    inputs.push({'name': pinName, 'value': 0});
+                    inputs.push({'name': pinName, 'value': 0, 'callbacks': []});
                     _next();
                     while (curToken.content === ',') {
                         _next();
                         if (!(pinName = expectPinName())) {
                             return false;
                         }
-                        inputs.push({'name': pinName, 'value': 0});
+                        inputs.push({'name': pinName, 'value': 0, 'callbacks': []});
                         _next();
                     }
                     if (!expectChar(';')) {
@@ -152,14 +284,14 @@ angular.module('app')
                     if (!(pinName = expectPinName())) {
                         return false;
                     }
-                    outputs.push({'name': pinName});
+                    outputs.push({'name': pinName, 'value': 0, 'callbacks': []});
                     _next();
                     while (curToken.content === ',') {
                         _next();
                         if (!(pinName = expectPinName())) {
                             return false;
                         }
-                        outputs.push({'name': pinName});
+                        outputs.push({'name': pinName, 'value': 0, 'callbacks': []});
                         _next();
                     }
                     if (!expectChar(';')) {
@@ -204,8 +336,7 @@ angular.module('app')
                     var chip =
                             {
                                 'name': '',
-                                'inputs': {},
-                                'outputs': {}
+                                'pins': {}
                             };
                     //TODO tady by se mělo kontrolovat zda takovej obvod existuje
                     if (!(chip.name = expectChipName())) {
@@ -258,7 +389,7 @@ angular.module('app')
                     if (!(pinNameRight = expectPinName())) {
                         return false;
                     }
-                    chip.inputs[pinNameLeft] = pinNameRight;
+                    chip.pins[pinNameLeft] = pinNameRight;
                     return true;
                 }
 

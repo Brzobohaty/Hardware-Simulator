@@ -4,7 +4,7 @@
 angular.module('app')
 
         /**
-         * Model uživatele
+         * Model chipu
          */
         .factory('ChipModel', ['CompilerService', 'ParserService', function (CompilerService, ParserService) {
                 var plainText; //HDL v čisté textové podobě
@@ -16,10 +16,11 @@ angular.module('app')
                 return {
                     setPlainText: setPlainText,
                     getRows: getRows,
-                    getOutputs:CompilerService.getOutputs,
-                    getInputs:CompilerService.getInputs,
-                    getName:CompilerService.getName,
-                    getParts:CompilerService.getParts
+                    getOutputs: CompilerService.getOutputs,
+                    getInputs: CompilerService.getInputs,
+                    getName: CompilerService.getName,
+                    getParts: CompilerService.getParts,
+                    inputChanged: inputChanged
                 };
 
                 /**
@@ -36,6 +37,17 @@ angular.module('app')
                 function setPlainText(plainTextt) {
                     plainText = plainTextt;
                     rowsArray = ParserService.parsePlainTextToRowsOfTokens(plainText);
-                    return CompilerService.compile(rowsArray);
+                    var noterror = CompilerService.compile(rowsArray);
+                    inputs = CompilerService.getInputs();
+                    outputs = CompilerService.getOutputs();
+                    return noterror;
                 }
+
+                //TODO tady vyvolat callbacky vstupů
+                function inputChanged(input) {
+                    for (var j = 0; j < input.callbacks.length; j++) {
+                        input.callbacks[j]();
+                    }
+                }
+                ;
             }]);
