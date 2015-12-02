@@ -57,7 +57,7 @@
             <div ng-if="item.name === 'Internal pins'" class="gridsterContentEnvelope">
                 <div class="gridsterContent  panel-body">
                     <p ng-repeat="part in parts">
-                        {{part.name}}: <label ng-repeat="pin in part.pins">{{pin.name}}={{pin.value|number}}&nbsp;</label>
+                        {{part.name}}: <label ng-repeat="pin in part.pins">{{pin.assignment}}={{pin.internalPin.value|number}}&nbsp;</label>
                     </p>
                 </div>
             </div>

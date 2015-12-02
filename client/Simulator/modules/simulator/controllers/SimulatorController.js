@@ -5,7 +5,7 @@ angular.module('app.simulator')
         /**
          * Simulátor
          */
-        .controller('SimulatorController', ['$scope', '$rootScope', 'ChipModel', '$sce', 'ParserService', function ($scope, $rootScope, ChipModel, $sce, ParserService) {
+        .controller('SimulatorController', ['$scope', '$rootScope', '$sce', 'ParserService', 'CompilerService', function ($scope, $rootScope, $sce, ParserService, CompilerService) {
                 $rootScope.page = 'simulator';
 
                 $scope.standardItems = [
@@ -27,20 +27,25 @@ angular.module('app.simulator')
                 };
 
                 //pro testování ....... smazat
-                $scope.compileError = !ChipModel.setPlainText("// This file is part of www.nand2tetris.org\n// and the book \"The Elements of Computing Systems\"\n// by Nisan and Schocken, MIT Press.\n// File name: projects/01/Xor.hdl\n\n/**\n *  Exclusive-or gate: out = !(a == b).\n */\n\n/** \n*/\nCHIP Xor {\n    IN a, b;\n    OUT out;\n\n    PARTS:\n    Not(in=b,out=bn);\n    And(a=a, b=bn, out=ab);\n    Not(in=a,out=an);\n    And(a=an, b=b, out=ba);\n    Or(a=ab ,b=ba ,out=out );\n}");
-
-                $scope.rowsArray = ChipModel.getRows();
-                $scope.chipName = ChipModel.getName();
-                $scope.parts = ChipModel.getParts();
-                $scope.inputs = ChipModel.getInputs();
-                $scope.outputs = ChipModel.getOutputs();
+                var simulatedChip = CompilerService.compile("// This file is part of www.nand2tetris.org\n// and the book \"The Elements of Computing Systems\"\n// by Nisan and Schocken, MIT Press.\n// File name: projects/01/Xor.hdl\n\n/**\n *  Exclusive-or gate: out = !(a == b).\n */\n\n/** \n*/\nCHIP Xor {\n    IN a, b;\n    OUT out;\n\n    PARTS:\n    Not(in=b,out=bn);\n    And(a=a, b=bn, out=ab);\n    Not(in=a,out=an);\n    And(a=an, b=b, out=ba);\n    Or(a=ab ,b=ba ,out=out );\n}");
+                
+                if(!simulatedChip){
+                   $scope.compileError = true; 
+                }
+                
+                
+                $scope.rowsArray = CompilerService.getTokens();
+                $scope.chipName = simulatedChip.name;
+                $scope.parts = simulatedChip.parts;
+                $scope.inputs = simulatedChip.inputs;
+                $scope.outputs = simulatedChip.outputs;
 
                 //přiřazení funkcí
                 $scope.mouseOverRow = mouseOverRow;
                 $scope.saveBind = $sce.trustAsHtml;
                 $scope.renderErrorsFromRow = renderErrorsFromRow;
                 $scope.isKeyword = ParserService.isKeyWord;
-                $scope.inputChanged = ChipModel.inputChanged;
+                $scope.inputChanged = simulatedChip.inputChanged;
 
                 /**
                  * Funkce při přejetí myši přes řádek.
