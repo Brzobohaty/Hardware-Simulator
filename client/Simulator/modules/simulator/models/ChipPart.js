@@ -5,7 +5,7 @@
 angular.module('app.simulator')
 
         /**
-         * Představuje object části chipu, ale zároveň může představovat i samotný hlavní chip
+         * Představuje object části chipu
          */
         .factory('ChipPart', [function () {
                 /**
@@ -24,20 +24,22 @@ angular.module('app.simulator')
                 Chip.prototype = {
                     /**
                      * Asociuje interní piny obvodu s piny tohoto chipu
-                     * @param {Object} pins mapa interních pinů obvodu
+                     * @param {Object} internalPins mapa interních pinů obvodu
                      * @param {Object} part chip předtavující část obvodu
                      * @return {Boolean} false pokud nastala chyba při kompilaci
                      */
-                    setPins: function (pins, part) {
+                    setPins: function (internalPins, part) {
                         for (var pinName in part.pins) {
                             if (this.inputs.hasOwnProperty(pinName)) {
-                                    this.inputs[pinName] = pins[part.pins[pinName].assignment];
+                                    this.inputs[pinName] = internalPins[part.pins[pinName].assignment];
                                     this.inputs[pinName].used = true;
-                                    part.pins[pinName].internalPin = pins[part.pins[pinName].assignment];
+                                    part.pins[pinName].internalPin = internalPins[part.pins[pinName].assignment];
+                                    part.pins[pinName].rightToken.pin = internalPins[part.pins[pinName].assignment];
                             } else if (this.outputs.hasOwnProperty(pinName)) {
-                                    this.outputs[pinName] = pins[part.pins[pinName].assignment];
+                                    this.outputs[pinName] = internalPins[part.pins[pinName].assignment];
                                     this.outputs[pinName].used = true;
-                                    part.pins[pinName].internalPin = pins[part.pins[pinName].assignment];
+                                    part.pins[pinName].internalPin = internalPins[part.pins[pinName].assignment];
+                                    part.pins[pinName].rightToken.pin = internalPins[part.pins[pinName].assignment];
                             } else {
                                 part.pins[pinName].leftToken.errorMes = 'Obvod ' + part.name + ' nemá pin s názvem ' + pinName;
                                 return false;

@@ -21,6 +21,7 @@ angular.module('app.simulator')
                      * @param {Object} input (name, value, callbacks)
                      */
                     inputChanged: function (input) {
+                        debugger;
                         for (var j = 0; j < input.callbacks.length; j++) {
                             input.callbacks[j]();
                         }

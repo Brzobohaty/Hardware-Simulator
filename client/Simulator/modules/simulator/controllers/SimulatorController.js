@@ -12,7 +12,7 @@ angular.module('app.simulator')
                     {sizeX: 2, sizeY: 2, row: 0, col: 0, name: 'HDL'},
                     {sizeX: 1, sizeY: 1, row: 0, col: 2, name: 'Input pins'},
                     {sizeX: 1, sizeY: 1, row: 0, col: 3, name: 'Output pins'},
-                    {sizeX: 2, sizeY: 2, row: 0, col: 4, name: 'Internal pins'}
+                    {sizeX: 1, sizeY: 1, row: 0, col: 4, name: 'Internal pins'}
                 ];
 
                 //nastavení gridsteru
@@ -35,17 +35,13 @@ angular.module('app.simulator')
                 
                 
                 $scope.rowsArray = CompilerService.getTokens();
-                $scope.chipName = simulatedChip.name;
-                $scope.parts = simulatedChip.parts;
-                $scope.inputs = simulatedChip.inputs;
-                $scope.outputs = simulatedChip.outputs;
-
+                $scope.simulatedChip = simulatedChip;
+                
                 //přiřazení funkcí
                 $scope.mouseOverRow = mouseOverRow;
                 $scope.saveBind = $sce.trustAsHtml;
                 $scope.renderErrorsFromRow = renderErrorsFromRow;
                 $scope.isKeyword = ParserService.isKeyWord;
-                $scope.inputChanged = simulatedChip.inputChanged;
 
                 /**
                  * Funkce při přejetí myši přes řádek.

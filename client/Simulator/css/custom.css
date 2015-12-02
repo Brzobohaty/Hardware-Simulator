@@ -210,8 +210,9 @@ body{
 }
 
 .myFormGroup .inputs{
-    display: inline-block;
-    width: 100px;
+    /* display: inline-block; */
+    /* width: 100px; */
+    overflow: hidden;
     margin-right: 10px;
 }
 
@@ -222,6 +223,37 @@ body{
 
 .myFormGroup .labels label{
     display: block;
-    height: 32px;
-    margin-bottom: 10px;
+    /* height: 0px; */
+    margin-bottom: 23px;
+    margin-top: 0px;
+}
+
+.floatRight{
+    float: right;
+}
+
+.table-nonfluid {
+   width: auto !important;
+}
+
+input[type=number]{
+    text-align: right;
+}
+
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+
+.bold{
+    font-weight: bold;
+}
+
+td span.myLabel{
+    padding-top: 4px;
+}
+
+.pinHovered{
+    background-color: #ff0;
 }

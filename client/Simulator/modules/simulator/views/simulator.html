@@ -1,7 +1,7 @@
 <div class="container-fluid">
     <nav class="navbar navbar-default">
         <div class="container-fluid">
-            <a ng-show="!compileError" class="navbar-brand normalCursor" href="javascript:void(0);">{{chipName}}</a>
+            <a ng-show="!compileError" class="navbar-brand normalCursor" href="javascript:void(0);">{{simulatedChip.name}}</a>
             <a ng-show="compileError" class="navbar-brand normalCursor compileError" href="javascript:void(0);">Compile error</a>
             <!--<button type="button" class="btn btn-default navbar-btn">Load chip</button>-->
         </div>
@@ -9,9 +9,9 @@
 </div>
 <div gridster="gridsterOpts">
     <ul>
-        <li gridster-item="item" ng-repeat="item in standardItems">
+        <li class="panel-primary" gridster-item="item" ng-repeat="item in standardItems">
             <div class="panel-heading gridsterHeading">
-                <h3 class="panel-title">{{item.name}} <span class="moveIcon glyphicon glyphicon-move"></span></h3>
+                <h3 class="panel-title">{{item.name}} <span class="moveIcon fa fa-arrows"></span></h3>
             </div>
             <div ng-if="item.name === 'HDL'" class="gridsterContentEnvelope">
                 <div class="rowNumbers" >
@@ -24,8 +24,9 @@
                 <div class="gridsterContent HDLgrid">
                     <p class="codeRow" ng-mouseenter="mouseOverRow($index + 1)" ng-mouseleave="mouseOverRow(0)" ng-repeat="row in rowsArray track by $index">
                         <span class="monospace" ng-repeat="token in row track by $index" ng-bind-html="saveBind(token.content)"
-                              ng-class="{'keywords':isKeyword(token.content), 'compileError':token.errorMes}"
-                              uib-popover="{{token.errorMes}}" popover-trigger="mouseenter" popover-placement="right"></span>
+                              ng-class="{'keywords':isKeyword(token.content), 'compileError':token.errorMes, 'bold':token.pin.color, 'pinHovered':token.pin.hover&&token.pin.color}"
+                              uib-popover="{{token.errorMes}}" popover-trigger="mouseenter" popover-placement="right"
+                              style="color: {{token.pin.color}}" ng-mouseenter="token.pin.hover = true" ng-mouseleave="token.pin.hover = false"></span>
                         <span ng-show="row.length === 0">&#13;&#10;</span>
                     </p>
                 </div>
@@ -34,10 +35,10 @@
                 <div class="gridsterContent  panel-body">
                     <div class="form-group myFormGroup">
                         <div class="labels">
-                            <label ng-repeat="input in inputs">{{input.name}}:</label>
+                            <label ng-repeat="input in simulatedChip.inputs" style="color: {{input.color}}" ng-mouseenter="input.hover = true" ng-mouseleave="input.hover = false" ng-class="{'pinHovered':input.hover}">{{input.name}}:</label>
                         </div>
                         <div class="inputs">
-                            <input ng-repeat="input in inputs track by $index" type="number" min="0" class="form-control" name="input{{$index}}" ng-model="input.value" ng-change="inputChanged(input)">
+                            <input ng-repeat="input in simulatedChip.inputs track by $index" type="number" min="0" max="1" class="form-control" name="input{{$index}}" ng-model="input.value" ng-change="simulatedChip.inputChanged(input)">
                         </div>
                     </div>
                 </div>
@@ -46,19 +47,32 @@
                 <div class="gridsterContent  panel-body">
                     <div class="form-group myFormGroup">
                         <div class="labels">
-                            <label ng-repeat="output in outputs">{{output.name}}:</label>
+                            <label ng-repeat="output in simulatedChip.outputs" style="color: {{output.color}}" ng-mouseenter="output.hover = true" ng-mouseleave="output.hover = false" ng-class="{'pinHovered':output.hover}">{{output.name}}:</label>
                         </div>
                         <div class="inputs">
-                            <input disabled="true" ng-repeat="output in outputs track by $index" type="number" min="0" class="form-control" name="input{{$index}}" ng-value="output.value" >
+                            <input disabled="true" ng-repeat="output in simulatedChip.outputs track by $index" type="number" min="0" class="form-control" name="input{{$index}}" ng-value="output.value" >
                         </div>
                     </div>
                 </div>
             </div>
             <div ng-if="item.name === 'Internal pins'" class="gridsterContentEnvelope">
-                <div class="gridsterContent  panel-body">
-                    <p ng-repeat="part in parts">
-                        {{part.name}}: <label ng-repeat="pin in part.pins">{{pin.assignment}}={{pin.internalPin.value|number}}&nbsp;</label>
-                    </p>
+                <div class="gridsterContent panel-body">
+                    <table class="table table-nonfluid">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Value</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="pin in simulatedChip.internalPins" ng-if="!pin.inOut" ng-mouseenter="pin.hover = true" ng-mouseleave="pin.hover = false" ng-class="{'pinHovered':pin.hover}">
+                                <td style="color: {{pin.color}}"><strong>{{pin.name}}</strong></td>
+                                <td><span class="label floatRight myLabel" ng-class="{'label-success':pin.value == 1, 'label-danger':pin.value == 0, 'label-default':pin.value != 0 && pin.value != 0}">{{pin.value|number}}</span></td>
+                                <td style="width: 100%"></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </li>
