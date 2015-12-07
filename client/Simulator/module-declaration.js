@@ -18,7 +18,9 @@ angular.module('app', [
     'ui.bootstrap',
     'toaster',
     'ngAnimate',
-    'angular-loading-bar'
+    'angular-loading-bar',
+    'angular-underscore',
+    'ngAnimate'
 ]);
 
 

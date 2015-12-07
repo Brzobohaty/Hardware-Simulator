@@ -116,12 +116,13 @@ body{
 .moveIcon{
     float: right;
     cursor: move;
+    margin-right: 10px;
+    margin-top: 1px;
 }
 
 .rowNumbers{
     width: 30px;
     float: left;
-    /* height: 100%; */
     min-height: 100%;
     -webkit-border-bottom-left-radius: 5px;
     -moz-border-radius-bottomleft: 5px;
@@ -210,20 +211,18 @@ body{
 }
 
 .myFormGroup .inputs{
-    /* display: inline-block; */
-    /* width: 100px; */
     overflow: hidden;
     margin-right: 10px;
+    padding-bottom: 10px;
 }
 
 .myFormGroup .inputs input{
     height: 32px;
-    margin-bottom: 10px;
+    /* margin-bottom: 10px; */
 }
 
 .myFormGroup .labels label{
     display: block;
-    /* height: 0px; */
     margin-bottom: 23px;
     margin-top: 0px;
 }
@@ -233,7 +232,8 @@ body{
 }
 
 .table-nonfluid {
-   width: auto !important;
+    width: auto !important;
+    white-space: nowrap;
 }
 
 input[type=number]{
@@ -242,8 +242,8 @@ input[type=number]{
 
 input[type=number]::-webkit-inner-spin-button, 
 input[type=number]::-webkit-outer-spin-button { 
-  -webkit-appearance: none; 
-  margin: 0; 
+    -webkit-appearance: none; 
+    margin: 0; 
 }
 
 .bold{
@@ -256,4 +256,109 @@ td span.myLabel{
 
 .pinHovered{
     background-color: #ff0;
+}
+
+.partNameHovered{
+    background-color: #a94442 !important;
+    cursor: pointer;
+}
+
+.gridHeadHovered{
+    background-color: #a94442 !important;
+    border-color: #a94442 !important;
+}
+
+.closeIcon{
+    float: right;
+    margin-top: -10px;
+    margin-right: -15px;
+    width: 30px;
+    height: 40px;
+    padding-top: 10px;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.25);
+    border-top-right-radius: 3px;
+    cursor: pointer;
+}
+
+.closeIcon:hover{
+    background-color: rgba(0,0,0,0.5);
+}
+
+.panel-primary.ng-enter,
+.panel-primary.ng-leave {
+    -webkit-transition:0.5s linear all !important;
+    transition:0.5s linear all !important;
+}
+
+.panel-primary.ng-enter,
+.panel-primary.ng-leave.ng-leave-active {
+    opacity:0 !important;
+}
+.panel-primary.ng-leave,
+.panel-primary.ng-enter.ng-enter-active { 
+    opacity:1 !important;
+}
+
+.displayButtons button{
+    margin-right: 2px;
+}
+
+.navbar{
+    margin-bottom: 10px;
+}
+
+@-webkit-keyframes pulse {
+    from {
+        -webkit-transform: scale(1.0);
+    }
+    50% {
+        -webkit-transform: scale(1.2);
+    }
+    to { 
+        -webkit-transform: scale(1.0);
+    }
+}
+
+.pulse {
+    -webkit-animation-name: pulse; 
+    -webkit-animation-duration: 0.5s; 
+    -webkit-animation-iteration-count: 1;
+}
+
+.button10{
+    cursor: pointer;
+    background-color: #337ab7;
+    color: white;
+    border-right-width: 0;
+}
+
+.button10:hover{
+    opacity: 0.8;
+}
+
+.noselect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.label-success{
+    background-color: #5cb85c !important;
+}
+
+.label-danger{
+    background-color: #d9534f !important;
+}
+
+.inputs input,.outputs input{
+    border-left-width: 0;
+    color: white;
+}
+
+.normalCursor{
+    cursor: default;
 }
