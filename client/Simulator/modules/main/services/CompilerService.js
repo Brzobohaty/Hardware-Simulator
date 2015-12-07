@@ -33,9 +33,14 @@ angular.module('app')
                  * @return {SimulatedChip} simulovatelný chip nebo false pokud nastala chyba při kompilaci
                  */
                 function compile(plainText) {
+                    currentRow = 0;
+                    currentTokenOnRow = 0;
+                    colorIndex = 0;
+                    partId = 0;
+                    ChipSimulationService.reset();
                     tokens = ParserService.parsePlainTextToRowsOfTokens(plainText);
                     if (_compileHeader() && _compileInputs() && _compileOutputs() && _compileParts() && _setParts()) {
-                        return ChipSimulationService.simulatedChip;
+                        return ChipSimulationService.getSimulatedChip();
                     }
                     return false;
                 }
@@ -45,8 +50,8 @@ angular.module('app')
                  * @return {Boolean} false pokud nastala chyba při kompilaci
                  */
                 function _setParts() {
-                    for (var i = 0; i < ChipSimulationService.parts.length; i++) {
-                        if (!ChipSimulationService.addChipPart(ChipSimulationService.parts[i])) {
+                    for (var i = 0; i < ChipSimulationService.getSimulatedChip().parts.length; i++) {
+                        if (!ChipSimulationService.addChipPart(ChipSimulationService.getSimulatedChip().parts[i])) {
                             return false;
                         }
                     }
@@ -63,12 +68,12 @@ angular.module('app')
                     if (specialArray) {
                         specialArray.push(pin);
                     }
-                    if (!ChipSimulationService.internalPins.hasOwnProperty(pinName)) {
-                        ChipSimulationService.internalPins[pinName] = pin;
-                        ChipSimulationService.internalPins[pinName].color = _generateColor();
-                        curToken.pin = ChipSimulationService.internalPins[pinName];
+                    if (!ChipSimulationService.getSimulatedChip().internalPins.hasOwnProperty(pinName)) {
+                        ChipSimulationService.getSimulatedChip().internalPins[pinName] = pin;
+                        ChipSimulationService.getSimulatedChip().internalPins[pinName].color = _generateColor();
+                        curToken.pin = ChipSimulationService.getSimulatedChip().internalPins[pinName];
                         if (specialArray) {
-                            ChipSimulationService.internalPins[pinName].inOut = true;
+                            ChipSimulationService.getSimulatedChip().internalPins[pinName].inOut = true;
                         }
                     }
                 }
@@ -90,7 +95,7 @@ angular.module('app')
                         return false;
                     }
                     _next();
-                    if (!(ChipSimulationService.simulatedChip.name = expectChipName())) {
+                    if (!(ChipSimulationService.getSimulatedChip().name = expectChipName())) {
                         return false;
                     }
                     _next();
@@ -107,7 +112,6 @@ angular.module('app')
                  */
                 function _compileInputs() {
                     var pinName;
-                    var input;
 
                     if (!expectKeyword('IN')) {
                         return false;
@@ -116,14 +120,14 @@ angular.module('app')
                     if (!(pinName = expectPinName())) {
                         return false;
                     }
-                    _pushPinToArrays(ChipSimulationService.inputs, pinName);
+                    _pushPinToArrays(ChipSimulationService.getSimulatedChip().inputs, pinName);
                     _next();
                     while (curToken.content === ',') {
                         _next();
                         if (!(pinName = expectPinName())) {
                             return false;
                         }
-                        _pushPinToArrays(ChipSimulationService.inputs, pinName);
+                        _pushPinToArrays(ChipSimulationService.getSimulatedChip().inputs, pinName);
                         _next();
                     }
                     if (!expectChar(';')) {
@@ -146,14 +150,14 @@ angular.module('app')
                     if (!(pinName = expectPinName())) {
                         return false;
                     }
-                    _pushPinToArrays(ChipSimulationService.outputs, pinName);
+                    _pushPinToArrays(ChipSimulationService.getSimulatedChip().outputs, pinName);
                     _next();
                     while (curToken.content === ',') {
                         _next();
                         if (!(pinName = expectPinName())) {
                             return false;
                         }
-                        _pushPinToArrays(ChipSimulationService.outputs, pinName);
+                        _pushPinToArrays(ChipSimulationService.getSimulatedChip().outputs, pinName);
                         _next();
                     }
                     if (!expectChar(';')) {
@@ -230,7 +234,7 @@ angular.module('app')
                     if (!expectChar(';')) {
                         return false;
                     }
-                    ChipSimulationService.parts.push(chip);
+                    ChipSimulationService.getSimulatedChip().parts.push(chip);
                     return true;
                 }
 

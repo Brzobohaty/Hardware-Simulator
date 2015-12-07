@@ -8,16 +8,24 @@ angular.module('app.simulator')
          * Slouží pro vytváření objektu pro simulování
          */
         .factory('ChipSimulationService', ['ChipPart', 'SimulatedChip', function (ChipPart, SimulatedChip) {
-                var simulatedChip = new SimulatedChip();
+                var simulatedChip;
                 
                 return {
-                    internalPins:simulatedChip.internalPins,
-                    inputs:simulatedChip.inputs,
-                    outputs:simulatedChip.outputs,
-                    parts:simulatedChip.parts,
-                    simulatedChip:simulatedChip,
-                    addChipPart: addChipPart
+                    getSimulatedChip:getSimulatedChip,
+                    addChipPart:addChipPart,
+                    reset:reset
                 };
+                
+                function getSimulatedChip(){
+                    return simulatedChip;
+                }
+                
+                /**
+                 * Resetuje simulovaný object
+                 */
+                function reset(){
+                    simulatedChip = new SimulatedChip();
+                }
                 
                 /**
                  * Přidá část obvodu do současného simulovatelného objektu.

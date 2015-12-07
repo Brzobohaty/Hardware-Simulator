@@ -6,39 +6,28 @@ angular.module('app.simulator')
          * Simulátor
          */
         .controller('SimulatorController', ['$scope', '$rootScope', '$sce', 'ParserService', 'CompilerService', function ($scope, $rootScope, $sce, ParserService, CompilerService) {
-                var openedParts = []; //udržuje id částí obvodu, které jsou zrovna otevřené
                 $rootScope.page = 'simulator';
 
-                $scope.standardItems = [
-                    {sizeX: 2, sizeY: 2, name: 'HDL', main:true, active:true},
-                    {sizeX: 1, sizeY: 1, name: 'Input pins', main:true, active:true},
-                    {sizeX: 1, sizeY: 1, name: 'Output pins', main:true, active:true},
-                    {sizeX: 1, sizeY: 1, name: 'Internal pins', main:true, active:true}
-                ];
 
-                //nastavení gridsteru
-                $scope.gridsterOpts = {
-                    //https://github.com/ManifestWebDesign/angular-gridster
-                    pushing: true, // whether to push other items out of the way on move or resize
-                    //floating: false, // whether to automatically float items up so they stack (you can temporarily disable if you are adding unsorted items with ng-repeat)
-                    swapping: true, // whether or not to have items of the same size switch places instead of pushing down if they are the same size
-                    draggable: {
-                        handle: '.moveIcon'
-                    }
-                };
 
+
+
+                //nahrání a kompilace chipu do simulovatelné podoby
                 //pro testování ....... smazat
                 var simulatedChip = CompilerService.compile("// This file is part of www.nand2tetris.org\n// and the book \"The Elements of Computing Systems\"\n// by Nisan and Schocken, MIT Press.\n// File name: projects/01/Xor.hdl\n\n/**\n *  Exclusive-or gate: out = !(a == b).\n */\n\n/** \n*/\nCHIP Xor {\n    IN a, b;\n    OUT out;\n\n    PARTS:\n    Not(in=b,out=bn);\n    And(a=a, b=bn, out=ab);\n    Not(in=a,out=an);\n    And(a=an, b=b, out=ba);\n    Or(a=ab ,b=ba ,out=out );\n}");
-
                 if (!simulatedChip) {
+                    _setGridster(true);
                     $scope.compileError = true;
+
+                } else {
+                    _setGridster(false);
+                    _makePartsWindows();
+                    $scope.simulatedChip = simulatedChip; //simulovaný chip
                 }
 
 
-                $scope.rowsArray = CompilerService.getTokens();
-                $scope.simulatedChip = simulatedChip;
-
-                _makePartsWindows();
+                //přiřazení proměnných
+                $scope.rowsArray = CompilerService.getTokens(); //řádky HDL kódu
 
                 //přiřazení funkcí
                 $scope.mouseOverRow = mouseOverRow;
@@ -47,6 +36,38 @@ angular.module('app.simulator')
                 $scope.isKeyword = ParserService.isKeyWord;
                 $scope.showPart = showPart;
                 $scope.closeGrid = closeGrid;
+
+                /**
+                 * Nastaví gridster a naplní ho hlavními okny
+                 */
+                function _setGridster(error) {
+                    if (error) {
+                        //vytvoření hlavních oken
+                        $scope.standardItems = [
+                            {sizeX: 4, sizeY: 4, name: 'HDL', main: true, active: true}
+                        ];
+                    } else {
+                        //vytvoření hlavních oken
+                        $scope.standardItems = [
+                            {sizeX: 2, sizeY: 2, name: 'HDL', main: true, active: true},
+                            {sizeX: 1, sizeY: 1, name: 'Input pins', main: true, active: true},
+                            {sizeX: 1, sizeY: 1, name: 'Output pins', main: true, active: true},
+                            {sizeX: 1, sizeY: 1, name: 'Internal pins', main: true, active: true}
+                        ];
+                    }
+
+
+                    //nastavení gridsteru
+                    $scope.gridsterOpts = {
+                        //https://github.com/ManifestWebDesign/angular-gridster
+                        pushing: true, // whether to push other items out of the way on move or resize
+                        //floating: false, // whether to automatically float items up so they stack (you can temporarily disable if you are adding unsorted items with ng-repeat)
+                        swapping: true, // whether or not to have items of the same size switch places instead of pushing down if they are the same size
+                        draggable: {
+                            handle: '.moveIcon'
+                        }
+                    };
+                }
 
                 /**
                  * Zavře dané okno
@@ -62,9 +83,9 @@ angular.module('app.simulator')
                 /**
                  * Vytvoří okna pro stavy pinů jednotlivých částí obvodu
                  */
-                function _makePartsWindows(){
-                    for(var key in simulatedChip.parts){
-                        $scope.standardItems.push({sizeX: 1, sizeY: 1, name: 'Part pins', active:false, partId:simulatedChip.parts[key].id, part: simulatedChip.parts[key]});
+                function _makePartsWindows() {
+                    for (var key in simulatedChip.parts) {
+                        $scope.standardItems.push({sizeX: 1, sizeY: 1, name: 'Part pins', active: false, partId: simulatedChip.parts[key].id, part: simulatedChip.parts[key]});
                     }
                 }
 
