@@ -5,57 +5,38 @@ angular.module('app.simulator')
         /**
          * Simulátor
          */
-        .controller('SimulatorController', ['$scope', '$rootScope', '$sce', 'ParserService', 'CompilerService', function ($scope, $rootScope, $sce, ParserService, CompilerService) {
+        .controller('SimulatorController', ['$scope', '$rootScope', '$sce', 'CompilerService', 'ChipsModel', function ($scope, $rootScope, $sce, CompilerService, ChipsModel) {
                 $rootScope.page = 'simulator';
-
-
-
-
-
-                //nahrání a kompilace chipu do simulovatelné podoby
-                //pro testování ....... smazat
-                var simulatedChip = CompilerService.compile("// This file is part of www.nand2tetris.org\n// and the book \"The Elements of Computing Systems\"\n// by Nisan and Schocken, MIT Press.\n// File name: projects/01/Xor.hdl\n\n/**\n *  Exclusive-or gate: out = !(a == b).\n */\n\n/** \n*/\nCHIP Xor {\n    IN a, b;\n    OUT out;\n\n    PARTS:\n    Not(in=b,out=bn);\n    And(a=a, b=bn, out=ab);\n    Not(in=a,out=an);\n    And(a=an, b=b, out=ba);\n    Or(a=ab ,b=ba ,out=out );\n}");
-                if (!simulatedChip) {
-                    _setGridster(true);
-                    $scope.compileError = true;
-
-                } else {
-                    _setGridster(false);
+                var chip = ChipsModel.getSimulatedChip();
+                
+                if (chip) {
+                    $scope.simulatedChip = chip.simulatedChip;
+                    
+                    _setGridster();
                     _makePartsWindows();
-                    $scope.simulatedChip = simulatedChip; //simulovaný chip
+                    
+                    //přiřazení proměnných
+                    $scope.rowsArray = chip.tokens; //řádky HDL kódu
+
+                    //přiřazení funkcí
+                    $scope.mouseOverRow = mouseOverRow;
+                    $scope.saveBind = $sce.trustAsHtml;
+                    $scope.renderErrorsFromRow = renderErrorsFromRow;
+                    $scope.showPart = showPart;
+                    $scope.closeGrid = closeGrid;
                 }
-
-
-                //přiřazení proměnných
-                $scope.rowsArray = CompilerService.getTokens(); //řádky HDL kódu
-
-                //přiřazení funkcí
-                $scope.mouseOverRow = mouseOverRow;
-                $scope.saveBind = $sce.trustAsHtml;
-                $scope.renderErrorsFromRow = renderErrorsFromRow;
-                $scope.isKeyword = ParserService.isKeyWord;
-                $scope.showPart = showPart;
-                $scope.closeGrid = closeGrid;
 
                 /**
                  * Nastaví gridster a naplní ho hlavními okny
                  */
-                function _setGridster(error) {
-                    if (error) {
-                        //vytvoření hlavních oken
-                        $scope.standardItems = [
-                            {sizeX: 4, sizeY: 4, name: 'HDL', main: true, active: true}
-                        ];
-                    } else {
-                        //vytvoření hlavních oken
-                        $scope.standardItems = [
-                            {sizeX: 2, sizeY: 2, name: 'HDL', main: true, active: true},
-                            {sizeX: 1, sizeY: 1, name: 'Input pins', main: true, active: true},
-                            {sizeX: 1, sizeY: 1, name: 'Output pins', main: true, active: true},
-                            {sizeX: 1, sizeY: 1, name: 'Internal pins', main: true, active: true}
-                        ];
-                    }
-
+                function _setGridster() {
+                    //vytvoření hlavních oken
+                    $scope.standardItems = [
+                        {sizeX: 2, sizeY: 3, name: 'HDL', main: true, active: true},
+                        {sizeX: 1, sizeY: 1, name: 'Input pins', main: true, active: true},
+                        {sizeX: 1, sizeY: 1, name: 'Output pins', main: true, active: true},
+                        {sizeX: 1, sizeY: 1, name: 'Internal pins', main: true, active: true}
+                    ];
 
                     //nastavení gridsteru
                     $scope.gridsterOpts = {
@@ -84,8 +65,8 @@ angular.module('app.simulator')
                  * Vytvoří okna pro stavy pinů jednotlivých částí obvodu
                  */
                 function _makePartsWindows() {
-                    for (var key in simulatedChip.parts) {
-                        $scope.standardItems.push({sizeX: 1, sizeY: 1, name: 'Part pins', active: false, partId: simulatedChip.parts[key].id, part: simulatedChip.parts[key]});
+                    for (var key in $scope.simulatedChip.parts) {
+                        $scope.standardItems.push({sizeX: 1, sizeY: 1, name: 'Part pins', active: false, partId: $scope.simulatedChip.parts[key].id, part: $scope.simulatedChip.parts[key]});
                     }
                 }
 

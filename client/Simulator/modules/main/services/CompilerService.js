@@ -17,32 +17,33 @@ angular.module('app')
                 var colorIndex = 0; //čítač barev
                 var colors = ['#00FF00','#0000FF','#FF0000','#01FFFE','#FFA6FE','#006401','#010067','#95003A','#007DB5','#FF00F6','#FFEEE8','#774D00','#90FB92','#0076FF','#D5FF00','#FF937E','#6A826C','#FF029D','#FE8900','#7A4782', '#FFDB66','#7E2DD2','#85A900','#FF0056','#A42400','#00AE7E','#683D3B','#BDC6FF','#263400','#BDD393','#00B917','#9E008E','#001544','#C28C9F','#FF74A3','#01D0FF','#004754','#E56FFE','#788231','#0E4CA1','#91D0CB','#BE9970','#968AE8','#BB8800','#43002C','#DEFF74','#00FFC6','#FFE502','#620E00','#008F9C','#98FF52','#7544B1','#B500FF','#00FF78','#FF6E41','#005F39','#6B6882','#5FAD4E','#A75740','#A5FFD2','#FFB167','#009BFF','#E85EBE'];
                 var partId = 0; //čítač id částí obvodu
+                var chip; //Obecná obálka chipu
+                var scope;
                 
                 return {
-                    getTokens: getTokens,
                     compile: compile
                 };
-
-                function getTokens() {
-                    return tokens;
-                }
-
+                
                 /**
                  * Zkompiluje celý obvod a případné chybové hlášky vloží přímo do daného pole
-                 * @param {String} plainText text HDL v surové podobě
-                 * @return {SimulatedChip} simulovatelný chip nebo false pokud nastala chyba při kompilaci
+                 * @param {Object} chipp object představující chip a obsahující text HDL v surové podobě
                  */
-                function compile(plainText) {
+                function compile(chipp, scopee) {
                     currentRow = 0;
                     currentTokenOnRow = 0;
                     colorIndex = 0;
                     partId = 0;
+                    chip = chipp;
                     ChipSimulationService.reset();
-                    tokens = ParserService.parsePlainTextToRowsOfTokens(plainText);
+                    tokens = ParserService.parsePlainTextToRowsOfTokens(chip.plainText);
+                    chip.tokens = tokens;
+                    scope = scopee;
                     if (_compileHeader() && _compileInputs() && _compileOutputs() && _compileParts() && _setParts()) {
-                        return ChipSimulationService.getSimulatedChip();
+                        chip.simulatedChip = ChipSimulationService.getSimulatedChip();
+                        chip.compileError = false;
+                        return;
                     }
-                    return false;
+                    chip.compileError = {'row':currentRow+1,'message':curToken.errorMes};
                 }
 
                 /**
@@ -252,7 +253,7 @@ angular.module('app')
                         return false;
                     }
                     if (chip.pins.hasOwnProperty(pinNameLeft)) {
-                        curToken.errorMes = pinNameLeft + ' pin occurs again';
+                        curToken.errorMes = '"'+pinNameLeft +'" pin occurs again';
                         return false;
                     }
                     _next();
@@ -279,7 +280,7 @@ angular.module('app')
                  */
                 function expectPinName() {
                     if (!nameRegex.test(curToken.content)) {
-                        curToken.errorMes = "Expected chip pin name. And chip pin name must start with letter and can containt just letters or digits. But found " + curToken.content;
+                        curToken.errorMes = 'Expected chip pin name. And chip pin name must start with letter and can containt just letters or digits. But found "' + curToken.content+'"';
                         return false;
                     } else {
                         return curToken.content;
@@ -292,7 +293,7 @@ angular.module('app')
                  */
                 function expectChipName() {
                     if (!nameRegex.test(curToken.content)) {
-                        curToken.errorMes = "Expected chip name. And chip name must start with letter and can containt just letters or digits. But found " + curToken.content;
+                        curToken.errorMes = 'Expected chip name. And chip name must start with letter and can containt just letters or digits. But found "' + curToken.content+'"';
                         return false;
                     } else {
                         return curToken.content;
@@ -306,7 +307,7 @@ angular.module('app')
                  */
                 function expectChar(char) {
                     if (curToken.content !== char) {
-                        curToken.errorMes = "Expected " + char + " but found " + curToken.content;
+                        curToken.errorMes = 'Expected "' + char + '" but found "' + curToken.content+'"';
                         return false;
                     }
                     return true;
@@ -319,7 +320,7 @@ angular.module('app')
                  */
                 function expectKeyword(keyword) {
                     if (curToken.content !== keyword) {
-                        curToken.errorMes = "Expected " + keyword + " but found " + curToken.content;
+                        curToken.errorMes = 'Expected "' + keyword + '" but found "' + curToken.content+'"';
                         return false;
                     }
                     return true;
@@ -333,10 +334,12 @@ angular.module('app')
                         currentTokenOnRow++;
                     } else {
                         currentRow++;
+                        _calcProgress();
                         currentTokenOnRow = 0;
                     }
 
                     for (currentRow; currentRow < tokens.length; currentRow++) {
+                        _calcProgress();
                         for (currentTokenOnRow; currentTokenOnRow < tokens[currentRow].length; currentTokenOnRow++) {
                             curToken = tokens[currentRow][currentTokenOnRow];
                             if (!notTokenRegex.test(curToken.content)) {
@@ -344,6 +347,16 @@ angular.module('app')
                             }
                         }
                         currentTokenOnRow = 0;
+                    }
+                }
+                
+                /**
+                 * Vypočítání compilačního postupu v procentech
+                 */
+                function _calcProgress(){
+                    chip.progress = currentRow/(tokens.length/100);
+                    if(scope){
+                        scope.$apply();
                     }
                 }
             }]);

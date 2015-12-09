@@ -5,7 +5,7 @@
 angular.module('app.authentication', []);
 angular.module('app.simulator', []);
 angular.module('app.editor', []);
-angular.module('app.project', []);
+angular.module('app.project', ['dropzone']);
 
 angular.module('app', [
     'ui.router',

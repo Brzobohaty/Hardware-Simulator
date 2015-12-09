@@ -15,11 +15,12 @@ angular.module('app.simulator')
                  * @param {object} outputs obsahuje pouze proměnné, které představují hodnoty na výstupu
                  * @param {function} computeFcn
                  */
-                var Chip = function (name, inputs, outputs, computeFcn) {
+                var Chip = function (builtIn, name, inputs, outputs, computeFcn) {
                     this.name = name; //jméno chipu
                     this._compute = computeFcn; //výpočetní funkce chipu
                     this.inputs = inputs;
                     this.outputs = outputs;
+                    this.builtIn = builtIn; //indikátor, zda se jedná o zabudovaný chip nebo chip uživatele
                 };
                 Chip.prototype = {
                     /**
@@ -29,6 +30,7 @@ angular.module('app.simulator')
                      * @return {Boolean} false pokud nastala chyba při kompilaci
                      */
                     setPins: function (internalPins, part) {
+                        part.builtIn = this.builtIn;
                         for (var pinName in part.pins) {
                             if (this.inputs.hasOwnProperty(pinName)) {
                                     this.inputs[pinName] = internalPins[part.pins[pinName].assignment];
@@ -41,7 +43,7 @@ angular.module('app.simulator')
                                     part.pins[pinName].internalPin = internalPins[part.pins[pinName].assignment];
                                     part.pins[pinName].rightToken.pin = internalPins[part.pins[pinName].assignment];
                             } else {
-                                part.pins[pinName].leftToken.errorMes = 'Obvod ' + part.name + ' nemá pin s názvem ' + pinName;
+                                part.pins[pinName].leftToken.errorMes = 'Part "' + part.name + '" hasn\'t pin called "' + pinName+'"';
                                 return false;
                             }
                         }
@@ -51,7 +53,7 @@ angular.module('app.simulator')
                             this._setListener();
                             return true;
                         } else {
-                            part.nameToken.errorMes = 'Not used all pins! Is missing pin '+missingPin;
+                            part.nameToken.errorMes = 'Not used all pins! Is missing pin "'+missingPin+'"';
                             return false;
                         }
                     },

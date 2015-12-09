@@ -362,3 +362,68 @@ td span.myLabel{
 .normalCursor{
     cursor: default;
 }
+
+.chipFile .name, .chipFile .progressBars{
+    padding-top: 6px;
+}
+
+.progressBars .progress{
+    margin-bottom: 0;
+}
+
+.chipFile:hover{
+    background-color: #DADADA;
+}
+
+.statusIcon img{
+    height: 30px;
+    padding-top: 4px;
+    float: left;
+}
+
+.statusIcon span{
+    /* vertical-align: sub; */
+    padding-top: 5px;
+    font-weight: bold;
+    color: #761c19;
+}
+
+.chipFile .sedButtons{
+    max-width: 300px;
+    min-width: 300px;
+}
+
+.statusIcon{
+    padding-right: 0;
+    padding-left: 15px;
+}
+
+.compileErrorMessage{
+    display: flex;
+    padding-left: 10px;
+}
+
+.chipFile{
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.list-group{
+    margin-top: 10px;
+}
+
+.partItem{
+    height: 55px;
+}
+
+.partItem span{
+    vertical-align: -webkit-baseline-middle;
+}
+
+.buttonRecompile{
+    margin-top: 10px;
+}
+
+.jumbotron{
+    text-align: center;
+}

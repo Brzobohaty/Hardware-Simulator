@@ -9,24 +9,35 @@ angular.module('app.simulator')
          */
         .factory('ChipSimulationService', ['ChipPart', 'SimulatedChip', function (ChipPart, SimulatedChip) {
                 var simulatedChip;
-                
-                return {
-                    getSimulatedChip:getSimulatedChip,
-                    addChipPart:addChipPart,
-                    reset:reset
+                var builtInChips = {
+                    'NOT': new ChipPart(true, 'NOT', {'in': {value: 0}}, {'out': {value: 1}}, function () {
+                        this.outputs['out'].value = !this.inputs['in'].value;
+                    }),
+                    'AND': new ChipPart(true, 'AND', {'a': {value: 0}, 'b': {value: 0}}, {'out': {value: 0}}, function () {
+                        this.outputs['out'].value = this.inputs['a'].value & this.inputs['b'].value;
+                    }),
+                    'OR': new ChipPart(true, 'OR', {'a': {value: 0}, 'b': {value: 0}}, {'out': {value: 0}}, function () {
+                        this.outputs['out'].value = this.inputs['a'].value | this.inputs['b'].value;
+                    })
                 };
-                
-                function getSimulatedChip(){
+
+                return {
+                    getSimulatedChip: getSimulatedChip,
+                    addChipPart: addChipPart,
+                    reset: reset
+                };
+
+                function getSimulatedChip() {
                     return simulatedChip;
                 }
-                
+
                 /**
                  * Resetuje simulovaný object
                  */
-                function reset(){
+                function reset() {
                     simulatedChip = new SimulatedChip();
                 }
-                
+
                 /**
                  * Přidá část obvodu do současného simulovatelného objektu.
                  * @param {Object} part
@@ -49,19 +60,8 @@ angular.module('app.simulator')
                  * @returns {ChipPart} chip nebo false, pokud nebyl nalezen odpovídající buildInChip
                  */
                 function _getBuiltInChip(name) {
-                    var builtInChips = {
-                        'NOT': new ChipPart('NOT', {'in': {value: 0}}, {'out': {value: 1}}, function () {
-                            this.outputs['out'].value = !this.inputs['in'].value;
-                        }),
-                        'AND': new ChipPart('AND', {'a': {value: 0}, 'b': {value: 0}}, {'out': {value: 0}}, function () {
-                            this.outputs['out'].value = this.inputs['a'].value & this.inputs['b'].value;
-                        }),
-                        'OR': new ChipPart('OR', {'a': {value: 0}, 'b': {value: 0}}, {'out': {value: 0}}, function () {
-                            this.outputs['out'].value = this.inputs['a'].value | this.inputs['b'].value;
-                        })
-                    };
                     if (builtInChips.hasOwnProperty(name)) {
-                        return builtInChips[name];
+                        return angular.copy(builtInChips[name]);
                     }
                     return false;
                 }

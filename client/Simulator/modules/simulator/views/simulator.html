@@ -1,103 +1,113 @@
-<div class="container-fluid">
-    <nav class="navbar navbar-default">
-        <div class="container-fluid">
-            <a ng-show="!compileError" class="navbar-brand normalCursor" href="javascript:void(0);">{{simulatedChip.name}}</a>
-            <a ng-show="compileError" class="navbar-brand normalCursor compileError" href="javascript:void(0);">Compile error</a>
-            <!--<button type="button" class="btn btn-default navbar-btn">Load chip</button>-->
+<div ng-show="simulatedChip">
+    <div class="container-fluid">
+        <nav class="navbar navbar-default">
+            <div class="container-fluid">
+                <a ng-show="!compileError" class="navbar-brand normalCursor" href="javascript:void(0);">{{simulatedChip.name}}</a>
+                <a ng-show="compileError" class="navbar-brand normalCursor compileError" href="javascript:void(0);">Compile error</a>
+                <!--<button type="button" class="btn btn-default navbar-btn">Load chip</button>-->
+            </div>
+        </nav>
+        <div class="displayButtons">
+            Display: <button type="button" class="btn btn-primary btn-xs" ng-class="{'disabled':item.active,'pulse':!item.active}" ng-repeat="item in standardItems" ng-if="item.main" ng-click="item.active = true">{{item.name}}</button>
         </div>
-    </nav>
-    <div class="displayButtons">
-        Display: <button type="button" class="btn btn-primary btn-xs" ng-class="{'disabled':item.active,'pulse':!item.active}" ng-repeat="item in standardItems" ng-if="item.main" ng-click="item.active = true">{{item.name}}</button>
+    </div>
+    <div gridster="gridsterOpts">
+        <ul>
+            <li class="panel-primary" gridster-item="item" ng-repeat="item in standardItems" ng-if="item.active">
+                <div class="panel-heading gridsterHeading"  ng-mouseenter="item.part.nameToken.hover = true" ng-mouseleave="item.part.nameToken.hover = false" ng-class="{'gridHeadHovered':item.part.nameToken.hover && item.part.id}">
+                    <h3 class="panel-title">{{item.name}} {{item.part.name}} <span class="closeIcon" ng-click="closeGrid(item)">×</span><span class="moveIcon fa fa-arrows"></span></h3>
+                </div>
+                <div ng-if="item.name === 'HDL'" class="gridsterContentEnvelope">
+                    <div class="rowNumbers" >
+                        <span ng-class="{'hovered': $index + 1 === rowNumberHover}" ng-repeat="row in rowsArray track by $index"
+                              uib-popover="{{errorsFromRow = renderErrorsFromRow(row);errorsFromRow}}" popover-trigger="mouseenter" popover-placement="right">
+                            <span ng-show="!errorsFromRow">{{$index + 1}}<br></span>
+                            <span ng-show="errorsFromRow"><img src="/Simulator/images/error.ico" alt="er"><br></span>
+                        </span>
+                    </div>
+                    <div class="gridsterContent HDLgrid">
+                        <p class="codeRow" ng-mouseenter="mouseOverRow($index + 1)" ng-mouseleave="mouseOverRow(0)" ng-repeat="row in rowsArray track by $index">
+                            <span class="monospace" ng-repeat="token in row track by $index" ng-bind-html="saveBind(token.content)"
+                                  ng-class="{'keywords':token.isKeyword, 'compileError':token.errorMes, 'bold':token.pin.color, 'pinHovered':token.pin.hover && token.pin.color, 'label label-primary':token.partId, 'partNameHovered':token.hover && token.partId}"
+                                  uib-popover="{{token.errorMes}}" popover-trigger="mouseenter" popover-placement="right"
+                                  style="color: {{token.pin.color}}" ng-mouseenter="token.pin.hover = true; token.hover = true" ng-mouseleave="token.pin.hover = false; token.hover = false" ng-click="showPart(token.partId)"></span>
+                            <span ng-show="row.length === 0">&#13;&#10;</span>
+                        </p>
+                    </div>
+                </div>
+                <div ng-if="item.name === 'Input pins'" class="gridsterContentEnvelope">
+                    <div class="gridsterContent  panel-body">
+                        <div class="form-group myFormGroup">
+                            <div class="inputs input-group" ng-repeat="input in simulatedChip.inputs track by $index">
+                                <span class="input-group-addon noselect normalCursor" style="color: {{input.color}}" ng-mouseenter="input.hover = true" ng-mouseleave="input.hover = false" ng-class="{'pinHovered':input.hover}"><strong>{{input.name}}</strong></span>
+                                <span class="input-group-addon button10 noselect" ng-click="input.value = (input.value + 1) % 2; simulatedChip.inputChanged(input)">1/0</span>
+                                <input onClick="this.select();" type="number" min="0" max="1" class="form-control" name="input{{$index}}" ng-model="input.value" ng-change="simulatedChip.inputChanged(input)" ng-class="{'label-success':input.value == 1, 'label-danger':input.value == 0, 'label-default':input.value != 0 && input.value != 0}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div ng-if="item.name === 'Output pins'" class="gridsterContentEnvelope">
+                    <div class="gridsterContent  panel-body">
+                        <div class="form-group myFormGroup">
+                            <div class="inputs input-group"  ng-repeat="output in simulatedChip.outputs track by $index">
+                                <span class="input-group-addon noselect normalCursor" style="color: {{output.color}}" ng-mouseenter="output.hover = true" ng-mouseleave="output.hover = false" ng-class="{'pinHovered':output.hover}"><strong>{{output.name}}</strong></span>
+                                <input disabled="true" type="number" min="0" class="form-control" name="input{{$index}}" ng-value="output.value"  ng-class="{'label-success':output.value == 1, 'label-danger':output.value == 0, 'label-default':output.value != 0 && output.value != 0}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div ng-if="item.name === 'Internal pins'" class="gridsterContentEnvelope">
+                    <div class="gridsterContent panel-body">
+                        <table class="table table-nonfluid">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Value</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="pin in simulatedChip.internalPins" ng-if="!pin.inOut" ng-mouseenter="pin.hover = true" ng-mouseleave="pin.hover = false" ng-class="{'pinHovered':pin.hover}">
+                                    <td style="color: {{pin.color}}"><strong>{{pin.name}}</strong></td>
+                                    <td><span class="label floatRight myLabel" ng-class="{'label-success':pin.value == 1, 'label-danger':pin.value == 0, 'label-default':pin.value != 0 && pin.value != 0}">{{pin.value|number}}</span></td>
+                                    <td style="width: 100%"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div ng-if="item.name === 'Part pins'" class="gridsterContentEnvelope">
+                    <div class="gridsterContent panel-body">
+                        <table class="table table-nonfluid">
+                            <thead>
+                                <tr>
+                                    <th>Part pin</th>
+                                    <th>Gate pin</th>
+                                    <th>Value</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="pin in item.part.pins" ng-mouseenter="pin.rightToken.pin.hover = true" ng-mouseleave="pin.rightToken.pin.hover = false" ng-class="{'pinHovered':pin.rightToken.pin.hover}">
+                                    <td>{{pin.name}}</td>
+                                    <td style="color: {{pin.rightToken.pin.color}}"><strong>{{pin.assignment}}</strong></td>
+                                    <td><span class="label floatRight myLabel" ng-class="{'label-success':pin.rightToken.pin.value == 1, 'label-danger':pin.rightToken.pin.value == 0, 'label-default':pin.rightToken.pin.value != 0 && pin.rightToken.pin.value != 0}">{{pin.rightToken.pin.value|number}}</span></td>
+                                    <td style="width: 100%"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </li>
+        </ul>
     </div>
 </div>
-<div gridster="gridsterOpts">
-    <ul>
-        <li class="panel-primary" gridster-item="item" ng-repeat="item in standardItems" ng-if="item.active">
-            <div class="panel-heading gridsterHeading"  ng-mouseenter="item.part.nameToken.hover = true" ng-mouseleave="item.part.nameToken.hover = false" ng-class="{'gridHeadHovered':item.part.nameToken.hover && item.part.id}">
-                <h3 class="panel-title">{{item.name}} {{item.part.name}} <span class="closeIcon" ng-click="closeGrid(item)">×</span><span class="moveIcon fa fa-arrows"></span></h3>
-            </div>
-            <div ng-if="item.name === 'HDL'" class="gridsterContentEnvelope">
-                <div class="rowNumbers" >
-                    <span ng-class="{'hovered': $index + 1 === rowNumberHover}" ng-repeat="row in rowsArray track by $index"
-                          uib-popover="{{errorsFromRow = renderErrorsFromRow(row);errorsFromRow}}" popover-trigger="mouseenter" popover-placement="right">
-                        <span ng-show="!errorsFromRow">{{$index + 1}}<br></span>
-                        <span ng-show="errorsFromRow"><img src="/Simulator/images/error.ico" alt="er"><br></span>
-                    </span>
-                </div>
-                <div class="gridsterContent HDLgrid">
-                    <p class="codeRow" ng-mouseenter="mouseOverRow($index + 1)" ng-mouseleave="mouseOverRow(0)" ng-repeat="row in rowsArray track by $index">
-                        <span class="monospace" ng-repeat="token in row track by $index" ng-bind-html="saveBind(token.content)"
-                              ng-class="{'keywords':isKeyword(token.content), 'compileError':token.errorMes, 'bold':token.pin.color, 'pinHovered':token.pin.hover && token.pin.color, 'label label-primary':token.partId, 'partNameHovered':token.hover && token.partId}"
-                              uib-popover="{{token.errorMes}}" popover-trigger="mouseenter" popover-placement="right"
-                              style="color: {{token.pin.color}}" ng-mouseenter="token.pin.hover = true; token.hover = true" ng-mouseleave="token.pin.hover = false; token.hover = false" ng-click="showPart(token.partId)"></span>
-                        <span ng-show="row.length === 0">&#13;&#10;</span>
-                    </p>
-                </div>
-            </div>
-            <div ng-if="item.name === 'Input pins'" class="gridsterContentEnvelope">
-                <div class="gridsterContent  panel-body">
-                    <div class="form-group myFormGroup">
-                        <div class="inputs input-group" ng-repeat="input in simulatedChip.inputs track by $index">
-                            <span class="input-group-addon noselect normalCursor" style="color: {{input.color}}" ng-mouseenter="input.hover = true" ng-mouseleave="input.hover = false" ng-class="{'pinHovered':input.hover}"><strong>{{input.name}}</strong></span>
-                            <span class="input-group-addon button10 noselect" ng-click="input.value=(input.value+1)%2; simulatedChip.inputChanged(input)">1/0</span>
-                            <input onClick="this.select();" type="number" min="0" max="1" class="form-control" name="input{{$index}}" ng-model="input.value" ng-change="simulatedChip.inputChanged(input)" ng-class="{'label-success':input.value == 1, 'label-danger':input.value == 0, 'label-default':input.value != 0 && input.value != 0}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div ng-if="item.name === 'Output pins'" class="gridsterContentEnvelope">
-                <div class="gridsterContent  panel-body">
-                    <div class="form-group myFormGroup">
-                        <div class="inputs input-group"  ng-repeat="output in simulatedChip.outputs track by $index">
-                            <span class="input-group-addon noselect normalCursor" style="color: {{output.color}}" ng-mouseenter="output.hover = true" ng-mouseleave="output.hover = false" ng-class="{'pinHovered':output.hover}"><strong>{{output.name}}</strong></span>
-                            <input disabled="true" type="number" min="0" class="form-control" name="input{{$index}}" ng-value="output.value"  ng-class="{'label-success':output.value == 1, 'label-danger':output.value == 0, 'label-default':output.value != 0 && output.value != 0}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div ng-if="item.name === 'Internal pins'" class="gridsterContentEnvelope">
-                <div class="gridsterContent panel-body">
-                    <table class="table table-nonfluid">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Value</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr ng-repeat="pin in simulatedChip.internalPins" ng-if="!pin.inOut" ng-mouseenter="pin.hover = true" ng-mouseleave="pin.hover = false" ng-class="{'pinHovered':pin.hover}">
-                                <td style="color: {{pin.color}}"><strong>{{pin.name}}</strong></td>
-                                <td><span class="label floatRight myLabel" ng-class="{'label-success':pin.value == 1, 'label-danger':pin.value == 0, 'label-default':pin.value != 0 && pin.value != 0}">{{pin.value|number}}</span></td>
-                                <td style="width: 100%"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div ng-if="item.name === 'Part pins'" class="gridsterContentEnvelope">
-                <div class="gridsterContent panel-body">
-                    <table class="table table-nonfluid">
-                        <thead>
-                            <tr>
-                                <th>Part pin</th>
-                                <th>Gate pin</th>
-                                <th>Value</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr ng-repeat="pin in item.part.pins" ng-mouseenter="pin.rightToken.pin.hover = true" ng-mouseleave="pin.rightToken.pin.hover = false" ng-class="{'pinHovered':pin.rightToken.pin.hover}">
-                                <td>{{pin.name}}</td>
-                                <td style="color: {{pin.rightToken.pin.color}}"><strong>{{pin.assignment}}</strong></td>
-                                <td><span class="label floatRight myLabel" ng-class="{'label-success':pin.rightToken.pin.value == 1, 'label-danger':pin.rightToken.pin.value == 0, 'label-default':pin.rightToken.pin.value != 0 && pin.rightToken.pin.value != 0}">{{pin.rightToken.pin.value|number}}</span></td>
-                                <td style="width: 100%"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </li>
-    </ul>
+<div ng-show="!simulatedChip" class="container">
+    <div class="jumbotron">
+        <h3>You have no chip to simulate.</h3> 
+        <button class="btn btn-primary" ui-sref="main.project">
+            <i class="fa fa-arrow-right"></i>
+            <span>Choose chip to simulate</span>
+        </button>
+    </div>
 </div>
-

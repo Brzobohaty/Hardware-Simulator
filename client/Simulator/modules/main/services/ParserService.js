@@ -10,18 +10,8 @@ angular.module('app')
         .factory('ParserService', [function () {
 
                 return {
-                    parsePlainTextToRowsOfTokens: parsePlainTextToRowsOfTokens,
-                    isKeyWord : isKeyWord
+                    parsePlainTextToRowsOfTokens: parsePlainTextToRowsOfTokens
                 };
-                
-                /**
-                 * @param {string} token
-                 * @returns {Boolean} true pokud je daný token klíčovým slovem
-                 */
-                function isKeyWord(token) {
-                    var regexp = /^CHIP|IN|OUT|PARTS$/;
-                    return regexp.test(token);
-                }
 
                 /**
                  * Přeparsuje čistý text kódu na pole jednotlivých řádků
@@ -90,9 +80,18 @@ angular.module('app')
                     var arrayWithErrors = [];
                     var token;
                     while(token = arrayOfTokens.shift()){
-                        arrayWithErrors.push({'content':token, 'errorMes':''});
+                        arrayWithErrors.push({'content':token, 'errorMes':'', 'isKeyword':_isKeyWord(token)});
                     }
                     return arrayWithErrors;
+                }
+                
+                /**
+                 * @param {string} token
+                 * @returns {Boolean} true pokud je daný token klíčovým slovem
+                 */
+                function _isKeyWord(token) {
+                    var regexp = /^CHIP|IN|OUT|PARTS$/;
+                    return regexp.test(token);
                 }
 
                 /**
