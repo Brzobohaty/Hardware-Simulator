@@ -22,5 +22,3 @@ angular.module('app', [
     'angular-underscore',
     'ngAnimate'
 ]);
-
-
