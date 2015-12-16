@@ -11,7 +11,19 @@ angular.module('app.project')
 
                 //přiřazení funkcí
                 $scope.onReadedFile = onReadedFile;
-                
+                $scope.changeChipUsed = changeChipUsed;
+
+                function changeChipUsed(part) {
+                    if (part.builtIn === 'true') {
+                        part.builtInChip.active = true;
+                        part.userChip.active = false;
+                    } else {
+                        part.builtInChip.active = false;
+                        part.userChip.active = true;
+                    }
+                    $scope.chipsModel.getSimulatedChip().simulatedChip.reComputeAll();
+                }
+
                 /**
                  * Přečte soubor a uloží jeho hlavní parametry do pole.
                  * @param {event} e

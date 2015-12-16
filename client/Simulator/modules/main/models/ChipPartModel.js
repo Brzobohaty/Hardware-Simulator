@@ -2,12 +2,12 @@
 
 'use strict';
 
-angular.module('app.simulator')
+angular.module('app')
 
         /**
          * Představuje object části chipu
          */
-        .factory('ChipPart', [function () {
+        .factory('ChipPart', ['ChipPartPinModel', function (ChipPartPinModel) {
                 /**
                  * Object představující jeden chip
                  * @param {String} name
@@ -15,12 +15,17 @@ angular.module('app.simulator')
                  * @param {object} outputs obsahuje pouze proměnné, které představují hodnoty na výstupu
                  * @param {function} computeFcn
                  */
-                var Chip = function (builtIn, name, inputs, outputs, computeFcn) {
+                var Chip = function (name, inputs, outputs, computeFcn, userSimulatedChip) {
                     this.name = name; //jméno chipu
-                    this._compute = computeFcn; //výpočetní funkce chipu
                     this.inputs = inputs;
                     this.outputs = outputs;
-                    this.builtIn = builtIn; //indikátor, zda se jedná o zabudovaný chip nebo chip uživatele
+                    this.active = false; //indikátor, zda je tato část obvud používána při výpočtu
+                    this.error; //indikátor, že nastal compile error
+                    if (userSimulatedChip && !computeFcn) {
+                        this.userSimulatedChip = userSimulatedChip;
+                    } else {
+                        this._compute = computeFcn; //výpočetní funkce chipu
+                    }
                 };
                 Chip.prototype = {
                     /**
@@ -29,31 +34,32 @@ angular.module('app.simulator')
                      * @param {Object} part chip předtavující část obvodu
                      * @return {Boolean} false pokud nastala chyba při kompilaci
                      */
-                    setPins: function (internalPins, part) {
-                        part.builtIn = this.builtIn;
+                    setPins: function (internalPins, part, chip) {
                         for (var pinName in part.pins) {
                             if (this.inputs.hasOwnProperty(pinName)) {
-                                    this.inputs[pinName] = internalPins[part.pins[pinName].assignment];
-                                    this.inputs[pinName].used = true;
-                                    part.pins[pinName].internalPin = internalPins[part.pins[pinName].assignment];
-                                    part.pins[pinName].rightToken.pin = internalPins[part.pins[pinName].assignment];
+                                this.inputs[pinName] = new ChipPartPinModel(pinName, internalPins[part.pins[pinName].assignment], this);
+                                part.pins[pinName].internalPin = internalPins[part.pins[pinName].assignment];
+                                part.pins[pinName].rightToken.pin = internalPins[part.pins[pinName].assignment];
                             } else if (this.outputs.hasOwnProperty(pinName)) {
-                                    this.outputs[pinName] = internalPins[part.pins[pinName].assignment];
-                                    this.outputs[pinName].used = true;
-                                    part.pins[pinName].internalPin = internalPins[part.pins[pinName].assignment];
-                                    part.pins[pinName].rightToken.pin = internalPins[part.pins[pinName].assignment];
+                                this.outputs[pinName] = new ChipPartPinModel(pinName, internalPins[part.pins[pinName].assignment], this);
+                                part.pins[pinName].internalPin = internalPins[part.pins[pinName].assignment];
+                                part.pins[pinName].rightToken.pin = internalPins[part.pins[pinName].assignment];
                             } else {
-                                part.pins[pinName].leftToken.errorMes = 'Part "' + part.name + '" hasn\'t pin called "' + pinName+'"';
+                                part.pins[pinName].leftToken.errorMes = 'Part "' + part.name + '" hasn\'t pin called "' + pinName + '"';
+                                chip.compileError = {'row': part.row + 1, 'message': 'Part "' + part.name + '" hasn\'t pin called "' + pinName + '"'};
+                                this.error = true;
                                 return false;
                             }
                         }
                         var missingPin = this._allUsed();
                         if (!missingPin) {
-                            this._compute();
                             this._setListener();
+                            this.error = false;
                             return true;
                         } else {
-                            part.nameToken.errorMes = 'Not used all pins! Is missing pin "'+missingPin+'"';
+                            part.nameToken.errorMes = 'Not used all pins! Is missing pin "' + missingPin + '"';
+                            chip.compileError = {'row': part.row + 1, 'message': 'Not used all pins! Is missing pin "' + missingPin + '"'};
+                            this.error = true;
                             return false;
                         }
                     },
@@ -63,12 +69,8 @@ angular.module('app.simulator')
                      * zavolá callbacky napojené na výstupní pin)
                      */
                     _setListener: function () {
-                        var chip = this;
                         for (var inputName in this.inputs) {
-                            this.inputs[inputName].callbacks.push(function () {
-                                chip._compute();
-                                chip._runOutputCallbacks();
-                            });
+                            this.inputs[inputName].internalPin.callbacks.push(this.inputs[inputName]);
                         }
                     },
                     /**
@@ -76,8 +78,8 @@ angular.module('app.simulator')
                      */
                     _runOutputCallbacks: function () {
                         for (var outputName in this.outputs) {
-                            for (var i = 0; i < this.outputs[outputName].callbacks.length; i++) {
-                                this.outputs[outputName].callbacks[i]();
+                            for (var i = 0; i < this.outputs[outputName].internalPin.callbacks.length; i++) {
+                                this.outputs[outputName].internalPin.callbacks[i].setValues();
                             }
                         }
                     },
@@ -99,6 +101,6 @@ angular.module('app.simulator')
                         return false;
                     }
                 };
-                
+
                 return Chip;
             }]);

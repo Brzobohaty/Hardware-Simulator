@@ -2,7 +2,7 @@
 
 'use strict';
 
-angular.module('app.simulator')
+angular.module('app')
 
         /**
          * Představuje object chipu, který může být přímo simulován
@@ -22,7 +22,22 @@ angular.module('app.simulator')
                      */
                     inputChanged: function (input) {
                         for (var j = 0; j < input.callbacks.length; j++) {
-                            input.callbacks[j]();
+                            input.callbacks[j].setValues();
+                        }
+                    },
+                    /**
+                     * @param {String} name název vstupu
+                     * @returns {Object} vstup
+                     */
+                    getInput: function (name) {
+                        return _.findWhere(this.inputs, {name:name});
+                    },
+                    /**
+                     * Přepočítá veškěré hodnoty na vnitřních a výstupních inech podle hodnot na vstupních pinech
+                     */
+                    reComputeAll: function(){
+                        for(var index in this.inputs){
+                            this.inputChanged(this.inputs[index]);
                         }
                     }
                 };

@@ -19,10 +19,19 @@ angular.module('app')
                 var partId = 0; //čítač id částí obvodu
                 var chip; //Obecná obálka chipu
                 var scope;
+                var chips; //seznam všech nahraných chipů v apliakci
                 
                 return {
-                    compile: compile
+                    compile: compile,
+                    setChipsArray:setChipsArray
                 };
+                
+                /**
+                 * @param {Array} chipss pole všech chipů v aplikaci
+                 */
+                function setChipsArray(chipss){
+                    chips = chipss;
+                }
                 
                 /**
                  * Zkompiluje celý obvod a případné chybové hlášky vloží přímo do daného pole
@@ -34,6 +43,11 @@ angular.module('app')
                     colorIndex = 0;
                     partId = 0;
                     chip = chipp;
+                    chip.compileError = null;
+                    chip.parts = null;
+                    chip.progress = null;
+                    chip.simulatedChip = null;
+                    chip.name = null;
                     ChipSimulationService.reset();
                     tokens = ParserService.parsePlainTextToRowsOfTokens(chip.plainText);
                     chip.tokens = tokens;
@@ -43,7 +57,9 @@ angular.module('app')
                         chip.compileError = false;
                         return;
                     }
-                    chip.compileError = {'row':currentRow+1,'message':curToken.errorMes};
+                    if(!chip.compileError){
+                        chip.compileError = {'row':currentRow+1,'message':curToken.errorMes};
+                    }
                 }
 
                 /**
@@ -52,7 +68,7 @@ angular.module('app')
                  */
                 function _setParts() {
                     for (var i = 0; i < ChipSimulationService.getSimulatedChip().parts.length; i++) {
-                        if (!ChipSimulationService.addChipPart(ChipSimulationService.getSimulatedChip().parts[i])) {
+                        if (!ChipSimulationService.addChipPart(ChipSimulationService.getSimulatedChip().parts[i], chip)) {
                             return false;
                         }
                     }
@@ -78,7 +94,11 @@ angular.module('app')
                         }
                     }
                 }
-
+                
+                /**
+                 * Vygeneruje další barvu pro pin
+                 * @returns {String} kód barvy
+                 */
                 function _generateColor() {
                     if(colorIndex>=colors.length){
                         colorIndex = 0;
@@ -87,11 +107,28 @@ angular.module('app')
                 }
 
                 /**
+                 * Zjistí, zda není v aplikaci již nahraný jiný chip se stejným názvem.
+                 * @param {String} chipName název právě vytvářeného chipu
+                 * @returns {Boolean} true pokud je chip unikátní
+                 */
+                function isChipUnique(chipName) {
+                    if (_.findWhere(chips, {name: chipName})) {
+                        curToken.errorMes = 'Chip with that name is not unique';
+                        chip.compileError = {'row':currentRow+1,'message':curToken.errorMes};
+                        return false;
+                    }
+                    return true;
+                }
+
+                /**
                  * Zkompiluje hlavičku obvodu
                  * @return {boolean} false pokud nastala chyba při kompilaci
                  */
                 function _compileHeader() {
-                    _next();
+                    curToken = tokens[0][0];
+                    if(curToken.content !== 'CHIP'){
+                        _next();
+                    }
                     if (!expectKeyword('CHIP')) {
                         return false;
                     }
@@ -99,6 +136,10 @@ angular.module('app')
                     if (!(ChipSimulationService.getSimulatedChip().name = expectChipName())) {
                         return false;
                     }
+                    if(!isChipUnique(ChipSimulationService.getSimulatedChip().name)){
+                        return false;
+                    }
+                    chip.name = ChipSimulationService.getSimulatedChip().name;
                     _next();
                     if (!expectChar('{')) {
                         return false;
@@ -205,10 +246,10 @@ angular.module('app')
                                 'id':++partId,
                                 'name': '',
                                 'pins': {},
-                                'nameToken': curToken
+                                'nameToken': curToken,
+                                'row': currentRow
                             };
                     curToken.partId = partId;
-                    //TODO tady by se mělo kontrolovat zda takovej obvod existuje
                     if (!(chip.name = expectChipName())) {
                         return false;
                     }
@@ -356,7 +397,9 @@ angular.module('app')
                 function _calcProgress(){
                     chip.progress = currentRow/(tokens.length/100);
                     if(scope){
-                        scope.$apply();
+                        if(!scope.$$phase) {
+                            scope.$apply();
+                        }
                     }
                 }
             }]);

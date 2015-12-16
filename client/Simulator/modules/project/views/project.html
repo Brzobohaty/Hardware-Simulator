@@ -4,7 +4,7 @@
             <div class="col-md-12">
                 <div class="file-row col-md-12 row chipFile" ng-repeat="chip in chipsModel.chips track by $index">
                     <div  class="col-md-2">
-                        <p class="name">{{chip.fileName}}</p>
+                        <p class="name"><span ng-show="chip.name">{{chip.name}} (</span>{{chip.fileName}}<span ng-show="chip.name">)</span></p>
                     </div>
                     <div class="col-md-3 sedButtons">
                         <button ng-disabled="chip.compileError" ng-show="chipsModel.getSimulatedChipIndex() !== $index" class="btn btn-primary" ng-click="chipsModel.setSimulatedChipIndex($index)">
@@ -19,7 +19,7 @@
                             <i class="fa fa-pencil-square-o"></i>
                             <span>Edit</span>
                         </button>
-                        <button class="btn btn-danger" ng-click="chipsModel.deleteChip($index)">
+                        <button class="btn btn-danger" ng-click="chipsModel.deleteChip($index, this)">
                             <i class="glyphicon glyphicon-trash"></i>
                             <span>Delete</span>
                         </button>
@@ -32,30 +32,26 @@
                     <div ng-show="!chip.compileError && chip.simulatedChip" class="statusIcon">
                         <img src="/Simulator/images/check.png" alt="">
                     </div>
-                    <div ng-show="chip.compileError" class="statusIcon">
+                    <div ng-show="chip.compileError" class="statusIcon" uib-popover-template="'myPopoverTemplate.html'" popover-trigger="mouseenter" popover-placement="bottom">
                         <img src="/Simulator/images/stop.png" alt="">
                         <div class="compileErrorMessage">
                             <span>Compile error on row {{chip.compileError.row}}: {{chip.compileError.message}}</span>
                         </div>
                     </div>
+                    <script type="text/ng-template" id="myPopoverTemplate.html">
+                        <span ng-repeat="token in chip.tokens[chip.compileError.row-1]" ng-class="{'compileError':token.errorMes}">{{token.content}}</span>
+                    </script>
                     <div ng-show="chipsModel.getSimulatedChipIndex() === $index" class="col-md-12">
                         <h4>Chip consists of the following parts:</h4>
                         <ul class="list-group col-md-3">
                             <li class="list-group-item partItem" ng-repeat="part in chip.simulatedChip.parts">
                                 <span>{{part.name}}</span>
                                 <div class="btn-group floatRight">
-                                    <label class="btn btn-primary" ng-model="part.builtIn" uib-btn-radio="true">BuiltIn</label>
-                                    <label class="btn btn-primary" ng-model="part.builtIn" uib-btn-radio="false">My</label>
+                                    <label class="btn btn-primary" ng-disabled="!part.builtInChip || part.builtInChip.error" ng-model="part.builtIn" ng-change="changeChipUsed(part)" uib-btn-radio="true">BuiltIn</label>
+                                    <label class="btn btn-primary" ng-disabled="!part.userChip || part.userChip.error" ng-model="part.builtIn" ng-change="changeChipUsed(part)" uib-btn-radio="false">My</label>
                                 </div>
                             </li>
                         </ul>
-                        
-                        <!--
-                        <button class="btn btn-info buttonRecompile">
-                            <i class="fa fa-refresh"></i>
-                            <span>Recompile</span>
-                        </button>
-                        -->
                     </div>
                 </div>
                 <div class="col-md-12">

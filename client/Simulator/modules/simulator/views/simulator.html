@@ -51,7 +51,7 @@
                         <div class="form-group myFormGroup">
                             <div class="inputs input-group"  ng-repeat="output in simulatedChip.outputs track by $index">
                                 <span class="input-group-addon noselect normalCursor" style="color: {{output.color}}" ng-mouseenter="output.hover = true" ng-mouseleave="output.hover = false" ng-class="{'pinHovered':output.hover}"><strong>{{output.name}}</strong></span>
-                                <input disabled="true" type="number" min="0" class="form-control" name="input{{$index}}" ng-value="output.value"  ng-class="{'label-success':output.value == 1, 'label-danger':output.value == 0, 'label-default':output.value != 0 && output.value != 0}">
+                                <input disabled="true" type="number" min="0" class="form-control" name="input{{$index}}" ng-value="output.value|number"  ng-class="{'label-success':output.value == 1, 'label-danger':output.value == 0, 'label-default':output.value != 0 && output.value != 0}">
                             </div>
                         </div>
                     </div>
