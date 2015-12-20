@@ -97,11 +97,11 @@ angular.module('app.simulator')
                 function renderErrorsFromRow(row) {
                     var errors = '';
                     for (var i = 0; i < row.length; i++) {
-                        if (errors.length > 0 && row[i].errorMes) {
+                        if (errors.length > 0 && row[i].getErrorMes()) {
                             errors += '\n\n';
                         }
-                        if (row[i].errorMes) {
-                            errors += row[i].errorMes;
+                        if (row[i].getErrorMes()) {
+                            errors += row[i].getErrorMes();
                         }
                     }
                     return errors;

@@ -27,9 +27,9 @@
                     </div>
                     <div class="gridsterContent HDLgrid">
                         <p class="codeRow" ng-mouseenter="mouseOverRow($index + 1)" ng-mouseleave="mouseOverRow(0)" ng-repeat="row in rowsArray track by $index">
-                            <span class="monospace" ng-repeat="token in row track by $index" ng-bind-html="saveBind(token.content)"
-                                  ng-class="{'keywords':token.isKeyword, 'compileError':token.errorMes, 'bold':token.pin.color, 'pinHovered':token.pin.hover && token.pin.color, 'label label-primary':token.partId, 'partNameHovered':token.hover && token.partId}"
-                                  uib-popover="{{token.errorMes}}" popover-trigger="mouseenter" popover-placement="right"
+                            <span class="monospace" ng-repeat="token in row track by $index" ng-bind-html="saveBind(token.getContent())"
+                                  ng-class="{'keywords':token.isKeyword(), 'compileError':token.getErrorMes(), 'bold':token.pin.color, 'pinHovered':token.pin.hover && token.pin.color, 'label label-primary':token.partId, 'partNameHovered':token.hover && token.partId}"
+                                  uib-popover="{{token.getErrorMes()}}" popover-trigger="mouseenter" popover-placement="right"
                                   style="color: {{token.pin.color}}" ng-mouseenter="token.pin.hover = true; token.hover = true" ng-mouseleave="token.pin.hover = false; token.hover = false" ng-click="showPart(token.partId)"></span>
                             <span ng-show="row.length === 0">&#13;&#10;</span>
                         </p>

@@ -72,8 +72,9 @@ angular.module('app')
                     }
                     if (!chipPartBuiltIn && !chipPartUser) {
                         chip.parts = simulatedChip.parts;
-                        part.nameToken.errorMes = 'There is not chip called ' + part.name;
-                        chip.compileError = {'row': part.row + 1, 'message': 'There is not chip called ' + part.name};
+                        var errMes = 'There is not chip called ' + part.name;
+                        part.nameToken.setErrorMes(errMes);
+                        chip.compileError = {'row': part.row + 1, 'message': errMes};
                         return false;
                     }
                     if (chipPartBuiltIn && !chipPartBuiltIn.error) {
@@ -122,9 +123,9 @@ angular.module('app')
                  */
                 function _clearErrors(chip, part) {
                     chip.compileError = null;
-                    part.nameToken.errorMes = null;
+                    part.nameToken.setErrorMes(null);
                     for (var pinName in part.pins) {
-                        part.pins[pinName].leftToken.errorMes = null;
+                        part.pins[pinName].leftToken.setErrorMes(null);
                     }
                 }
 

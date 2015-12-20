@@ -45,8 +45,9 @@ angular.module('app')
                                 part.pins[pinName].internalPin = internalPins[part.pins[pinName].assignment];
                                 part.pins[pinName].rightToken.pin = internalPins[part.pins[pinName].assignment];
                             } else {
-                                part.pins[pinName].leftToken.errorMes = 'Part "' + part.name + '" hasn\'t pin called "' + pinName + '"';
-                                chip.compileError = {'row': part.row + 1, 'message': 'Part "' + part.name + '" hasn\'t pin called "' + pinName + '"'};
+                                var errMes = 'Part "' + part.name + '" hasn\'t pin called "' + pinName + '"';
+                                part.pins[pinName].leftToken.setErrorMes(errMes);
+                                chip.compileError = {'row': part.row + 1, 'message': errMes};
                                 this.error = true;
                                 return false;
                             }
@@ -57,8 +58,9 @@ angular.module('app')
                             this.error = false;
                             return true;
                         } else {
-                            part.nameToken.errorMes = 'Not used all pins! Is missing pin "' + missingPin + '"';
-                            chip.compileError = {'row': part.row + 1, 'message': 'Not used all pins! Is missing pin "' + missingPin + '"'};
+                            var errMes = 'Not used all pins! Is missing pin "' + missingPin + '"';
+                            part.nameToken.setErrorMes(errMes);
+                            chip.compileError = {'row': part.row + 1, 'message': errMes};
                             this.error = true;
                             return false;
                         }

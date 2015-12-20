@@ -39,7 +39,7 @@
                         </div>
                     </div>
                     <script type="text/ng-template" id="myPopoverTemplate.html">
-                        <span ng-repeat="token in chip.tokens[chip.compileError.row-1]" ng-class="{'compileError':token.errorMes}">{{token.content}}</span>
+                        <span ng-repeat="token in chip.tokens[chip.compileError.row-1]" ng-class="{'compileError':token.getErrorMes()}">{{token.getContent()}}</span>
                     </script>
                     <div ng-show="chipsModel.getSimulatedChipIndex() === $index" class="col-md-12">
                         <h4>Chip consists of the following parts:</h4>

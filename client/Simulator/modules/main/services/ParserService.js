@@ -7,7 +7,7 @@ angular.module('app')
         /**
          * Parser HDL
          */
-        .factory('ParserService', [function () {
+        .factory('ParserService', ['TokenModel', function (TokenModel) {
 
                 return {
                     parsePlainTextToRowsOfTokens: parsePlainTextToRowsOfTokens
@@ -80,18 +80,9 @@ angular.module('app')
                     var arrayWithErrors = [];
                     var token;
                     while(token = arrayOfTokens.shift()){
-                        arrayWithErrors.push({'content':token, 'errorMes':'', 'isKeyword':_isKeyWord(token)});
+                        arrayWithErrors.push(new TokenModel(token));
                     }
                     return arrayWithErrors;
-                }
-                
-                /**
-                 * @param {string} token
-                 * @returns {Boolean} true pokud je daný token klíčovým slovem
-                 */
-                function _isKeyWord(token) {
-                    var regexp = /^CHIP|IN|OUT|PARTS$/;
-                    return regexp.test(token);
                 }
 
                 /**
