@@ -13,11 +13,11 @@ angular.module('app')
                  * @param {int} bitSize šířka pinu v bitech
                  * @param {Array} bitsAssigned pole indexů bitů, které jsou tomuto internímu čipu přiřazeny (allow null)
                  */
-                var Pin = function (name, bitSize, bitsAssigned) {
+                var Pin = function (name, bitSize, bitsAssigned, inOut) {
                     this.name = name; //název pinu
                     this.bits = []; //jednotlivé bity pinu (BitModel)
                     this.color; //barva pinu
-                    this.inOut = false; //indikátor, zda se jedná o vstup/výstup nebo interní pin
+                    this.inOut = inOut | false; //indikátor, zda se jedná o vstup = 1, výstup = 2 nebo interní pin = false/null 
                     this.value = 0; //hodnoty všech bitů v jedné hodnotě
                     this.bitsAssigned = bitsAssigned; //pole indexů bitů, které jsou tomuto internímu čipu přiřazeny
 
@@ -39,10 +39,11 @@ angular.module('app')
                         return this.name;
                     },
                     /**
-                     * Nastaví tento pin jako vstupní/výstupní
+                     * Jedná se o vstup/výstup nebo interní pin?
+                     * @returns {int} vstup = 1, výstup = 2 nebo interní pin = false/null
                      */
-                    setInOut: function () {
-                        this.inOut = true;
+                    isInOut:function(){
+                        return this.inOut;
                     },
                     /**
                      * Vygeneruje pro pin unikátní barvu

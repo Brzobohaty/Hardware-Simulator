@@ -7,18 +7,19 @@ angular.module('app')
         /**
          * Kompilátor HDL
          */
-        .factory('CompilerService', ['ParserService', 'ChipSimulationService', 'PinModel', function (ParserService, ChipSimulationService, PinModel) {
-                var tokens; //dvourozměrné pole řádků a tokenů
+        .factory('CompilerService', ['ParserService', 'PinModel', 'SimulatedChipModel', function (ParserService, PinModel, SimulatedChipModel) {
+                var _tokens; //dvourozměrné pole řádků a tokenů
                 var _curToken; //{TokenModel} současný token
-                var currentRow = 0; //{int} současné číslo řádek
-                var currentTokenOnRow = 0; //{int} současné pořadí tokenu na řádku
-                var notTokenRegex = /^<span class=.*<\/span>$|\s+|\n/; //regex pro komentáře a bílé znaky
-                var nameRegex = /^[A-Za-z][A-Za-z0-9]*$/; //regex pro názvy chipů a pinů
-                var numberRegex = /^[0-9]*$/; //regex pro čísla
-                var partId = 0; //{int} čítač id částí obvodu
+                var _currentRow = 0; //{int} současné číslo řádek
+                var _currentTokenOnRow = 0; //{int} současné pořadí tokenu na řádku
+                var _notTokenRegex = /^<span class=.*<\/span>$|\s+|\n/; //regex pro komentáře a bílé znaky
+                var _nameRegex = /^[A-Za-z][A-Za-z0-9]*$/; //regex pro názvy chipů a pinů
+                var _numberRegex = /^[0-9]*$/; //regex pro čísla
+                var _partId = 0; //{int} čítač id částí obvodu
                 var _chip; //{ChipModel} Obecná obálka chipu
-                var scope;
-                var chips; //{ChipModel} seznam všech nahraných chipů v aplikaci
+                var _scope;
+                var _chips; //{ChipModel} seznam všech nahraných chipů v aplikaci
+                var _simulatedChip; //{SimulatedChipModel} simulovatelný chip
 
                 return {
                     compile: compile,
@@ -29,58 +30,32 @@ angular.module('app')
                  * @param {Array} chipss pole všech chipů v aplikaci
                  */
                 function setChipsArray(chipss) {
-                    chips = chipss;
+                    _chips = chipss;
                 }
 
                 /**
                  * Zkompiluje celý obvod a případné chybové hlášky vloží přímo do daného pole
                  * @param {ChipModel} chipp object představující chip a obsahující text HDL v surové podobě
+                 * @param {Scope} scopee
                  */
                 function compile(chipp, scopee) {
-                    currentRow = 0;
-                    currentTokenOnRow = 0;
-                    partId = 0;
+                    _currentRow = 0;
+                    _currentTokenOnRow = 0;
+                    _partId = 0;
                     _chip = chipp;
                     PinModel.restartColors();
-                    ChipSimulationService.reset();
-                    tokens = ParserService.parsePlainTextToRowsOfTokens(_chip.getPlainText());
-                    _chip.setTokens(tokens);
-                    scope = scopee;
-                    if (_compileHeader() && _compileInputs() && _compileOutputs() && _compileParts() && _setParts()) {
-                        _chip.setSimulatedChip(ChipSimulationService.getSimulatedChip());
+                    _simulatedChip = new SimulatedChipModel();
+                    _tokens = ParserService.parsePlainTextToRowsOfTokens(_chip.getPlainText());
+                    _chip.setTokens(_tokens);
+                    _scope = scopee;
+                    if (_compileHeader() && _compileInputs() && _compileOutputs() && _compileParts() && _simulatedChip.makeChipParts(_chip)) {
+                        _chip.setSimulatedChip(_simulatedChip);
                         _chip.clearCompileError();
                         return;
                     }
                     if (!_chip.compileError) {
-                        _chip.setCompileError(currentRow + 1, _curToken.getErrorMes());
+                        _chip.setCompileError(_currentRow + 1, _curToken.getErrorMes());
                     }
-                }
-
-                /**
-                 * Vytvoří části obvodu tvořené jinými čipy a přiřadí jim správné piny 
-                 * @return {Boolean} false pokud nastala chyba při kompilaci
-                 */
-                function _setParts() {
-                    for (var i = 0; i < ChipSimulationService.getSimulatedChip().parts.length; i++) {
-                        if (!ChipSimulationService.addChipPart(ChipSimulationService.getSimulatedChip().parts[i], _chip)) {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-
-                /**
-                 * Naplní dané speciální pole a pole interních pinů daným pinem.
-                 * @param {Object} tokenOfPin token pinu
-                 * @param {Array} specialArray pole do kterého se má vložit pin kromě pole pro interní piny (může být null)
-                 * @param {PinModel} pin
-                 */
-                function _pushPinToArrays(tokenOfPin, specialArray, pin) {
-                    if (specialArray) {
-                        specialArray.push(pin);
-                        pin.setInOut();
-                    }
-                    ChipSimulationService.getSimulatedChip().addInternalPin(pin, tokenOfPin);
                 }
 
                 /**
@@ -89,13 +64,13 @@ angular.module('app')
                  * @returns {Boolean} true pokud je chip unikátní
                  */
                 function isChipUnique(chipName) {
-                    var foundedChips = chips.filter(function (chip) {
+                    var foundedChips = _chips.filter(function (chip) {
                         return chip.getName() === chipName;
                     });
                     if (foundedChips.length > 0) {
                         var errMes = 'Chip with that name is not unique';
                         _curToken.setErrorMes(errMes);
-                        _chip.setCompileError(currentRow + 1, errMes);
+                        _chip.setCompileError(_currentRow + 1, errMes);
                         return false;
                     }
                     return true;
@@ -106,7 +81,7 @@ angular.module('app')
                  * @return {boolean} false pokud nastala chyba při kompilaci
                  */
                 function _compileHeader() {
-                    _curToken = tokens[0][0];
+                    _curToken = _tokens[0][0];
                     if (_curToken.getContent() !== 'CHIP') {
                         _next();
                     }
@@ -121,7 +96,6 @@ angular.module('app')
                     if (!isChipUnique(chipName)) {
                         return false;
                     }
-                    ChipSimulationService.getSimulatedChip().name = chipName;
                     _chip.setName(chipName);
                     _next();
                     if (!expectChar('{')) {
@@ -140,12 +114,12 @@ angular.module('app')
                         return false;
                     }
                     _next();
-                    if (!expectInputOutputPin(ChipSimulationService.getSimulatedChip().inputs)) {
+                    if (!expectInputOutputPin(1)) {
                         return false;
                     }
                     while (_curToken.getContent() === ',') {
                         _next();
-                        if (!expectInputOutputPin(ChipSimulationService.getSimulatedChip().inputs)) {
+                        if (!expectInputOutputPin(1)) {
                             return false;
                         }
                     }
@@ -165,12 +139,12 @@ angular.module('app')
                         return false;
                     }
                     _next();
-                    if (!expectInputOutputPin(ChipSimulationService.getSimulatedChip().outputs)) {
+                    if (!expectInputOutputPin(2)) {
                         return false;
                     }
                     while (_curToken.getContent() === ',') {
                         _next();
-                        if (!expectInputOutputPin(ChipSimulationService.getSimulatedChip().outputs)) {
+                        if (!expectInputOutputPin(2)) {
                             return false;
                         }
                     }
@@ -215,13 +189,13 @@ angular.module('app')
                 function expectPart() {
                     var chip =
                             {
-                                'id': ++partId,
+                                'id': ++_partId,
                                 'name': '',
                                 'pins': {},
                                 'nameToken': _curToken,
-                                'row': currentRow
+                                'row': _currentRow
                             };
-                    _curToken.partId = partId;
+                    _curToken.partId = _partId;
                     if (!(chip.name = expectChipName())) {
                         return false;
                     }
@@ -246,7 +220,7 @@ angular.module('app')
                     if (!expectChar(';')) {
                         return false;
                     }
-                    ChipSimulationService.getSimulatedChip().parts.push(chip);
+                    _simulatedChip.addPart(chip);
                     return true;
                 }
 
@@ -288,10 +262,10 @@ angular.module('app')
 
                 /**
                  * Zkontroluje, zda je v následujících tokenech validní deklarace pinu a pokud ne, tak uloží do tokenu chybovou hlášku.
-                 * @param {Array} specialArray pole vstupů nebo výstupů nebo null
+                 * @param {int} type indikátor, zda se jedná o vstup = 1, výstup = 2
                  * @returns {string/boolean} false pokud nastala chyba při kompilaci, jinak pin
                  */
-                function expectInputOutputPin(specialArray) {
+                function expectInputOutputPin(type) {
                     var pinName;
                     if (!(pinName = expectPinName())) {
                         return false;
@@ -301,7 +275,7 @@ angular.module('app')
                     _next();
                     if (_curToken.getContent() === '[') {
                         _next();
-                        if (!numberRegex.test(_curToken.getContent())) {
+                        if (!_numberRegex.test(_curToken.getContent())) {
                             _curToken.setErrorMes('Expected number but found "' + _curToken.getContent() + '"');
                             return false;
                         }
@@ -312,8 +286,8 @@ angular.module('app')
                         }
                         _next();
                     }
-                    var pin = new PinModel(pinName, pinBitSize);
-                    _pushPinToArrays(tokenOfPin, specialArray, pin);
+                    var pin = new PinModel(pinName, pinBitSize, null, type);
+                    _simulatedChip.addPin(pin, tokenOfPin);
                     return pin;
                 }
 
@@ -332,7 +306,7 @@ angular.module('app')
                     _next();
                     if (_curToken.getContent() === '[') {
                         _next();
-                        if (!numberRegex.test(_curToken.getContent())) {
+                        if (!_numberRegex.test(_curToken.getContent())) {
                             _curToken.setErrorMes('Expected number but found "' + _curToken.getContent() + '"');
                             return false;
                         }
@@ -346,7 +320,7 @@ angular.module('app')
                         bitsAssigned.push(0);
                     }
                     var pin = new PinModel(pinName, pinBitSize, bitsAssigned);
-                    _pushPinToArrays(tokenOfPin, null, pin);
+                    _simulatedChip.addPin(pin, tokenOfPin);
                     return pin;
                 }
 
@@ -355,7 +329,7 @@ angular.module('app')
                  * @return {string/boolean} false pokud nastala chyba při kompilaci, jinak název pinu
                  */
                 function expectPinName() {
-                    if (!nameRegex.test(_curToken.getContent())) {
+                    if (!_nameRegex.test(_curToken.getContent())) {
                         _curToken.setErrorMes('Expected chip pin name. And chip pin name must start with letter and can containt just letters or digits. But found "' + _curToken.getContent() + '"');
                         return false;
                     } else {
@@ -368,7 +342,7 @@ angular.module('app')
                  * @return {string/boolean} false pokud nastala chyba při kompilaci, jinak název obvodu
                  */
                 function expectChipName() {
-                    if (!nameRegex.test(_curToken.getContent())) {
+                    if (!_nameRegex.test(_curToken.getContent())) {
                         _curToken.setErrorMes('Expected chip name. And chip name must start with letter and can containt just letters or digits. But found "' + _curToken.getContent() + '"');
                         return false;
                     } else {
@@ -406,23 +380,23 @@ angular.module('app')
                  * Přeskočí všechny bílé znaky, komentáře a do současného tokenu uloží první opravdový token, který najde
                  */
                 function _next() {
-                    if (currentTokenOnRow < tokens[currentRow].length) {
-                        currentTokenOnRow++;
+                    if (_currentTokenOnRow < _tokens[_currentRow].length) {
+                        _currentTokenOnRow++;
                     } else {
-                        currentRow++;
+                        _currentRow++;
                         _calcProgress();
-                        currentTokenOnRow = 0;
+                        _currentTokenOnRow = 0;
                     }
 
-                    for (currentRow; currentRow < tokens.length; currentRow++) {
+                    for (_currentRow; _currentRow < _tokens.length; _currentRow++) {
                         _calcProgress();
-                        for (currentTokenOnRow; currentTokenOnRow < tokens[currentRow].length; currentTokenOnRow++) {
-                            _curToken = tokens[currentRow][currentTokenOnRow];
-                            if (!notTokenRegex.test(_curToken.getContent())) {
+                        for (_currentTokenOnRow; _currentTokenOnRow < _tokens[_currentRow].length; _currentTokenOnRow++) {
+                            _curToken = _tokens[_currentRow][_currentTokenOnRow];
+                            if (!_notTokenRegex.test(_curToken.getContent())) {
                                 return;
                             }
                         }
-                        currentTokenOnRow = 0;
+                        _currentTokenOnRow = 0;
                     }
                 }
 
@@ -430,10 +404,10 @@ angular.module('app')
                  * Vypočítání compilačního postupu v procentech
                  */
                 function _calcProgress() {
-                    _chip.progress = currentRow / (tokens.length / 100);
-                    if (scope) {
-                        if (!scope.$$phase) {
-                            scope.$apply();
+                    _chip.progress = _currentRow / (_tokens.length / 100);
+                    if (_scope) {
+                        if (!_scope.$$phase) {
+                            _scope.$apply();
                         }
                     }
                 }

@@ -2,7 +2,7 @@
     <div class="container-fluid">
         <nav class="navbar navbar-default">
             <div class="container-fluid">
-                <a ng-show="!compileError" class="navbar-brand normalCursor" href="javascript:void(0);">{{simulatedChip.name}}</a>
+                <a ng-show="!compileError" class="navbar-brand normalCursor" href="javascript:void(0);">{{chipName}}</a>
                 <a ng-show="compileError" class="navbar-brand normalCursor compileError" href="javascript:void(0);">Compile error</a>
                 <!--<button type="button" class="btn btn-default navbar-btn">Load chip</button>-->
             </div>
@@ -38,7 +38,7 @@
                 <div ng-if="item.name === 'Input pins'" class="gridsterContentEnvelope">
                     <div class="gridsterContent  panel-body">
                         <div class="form-group myFormGroup">
-                            <div class="inputs input-group" ng-repeat="input in simulatedChip.inputs track by $index">
+                            <div class="inputs input-group" ng-repeat="input in simulatedChip.getInputs() track by $index">
                                 <span class="input-group-addon noselect normalCursor" style="color: {{input.color}}" ng-mouseenter="input.hover = true" ng-mouseleave="input.hover = false" ng-class="{'pinHovered':input.hover}"><strong>{{input.name}}</strong></span>
                                 <span class="input-group-addon button10 noselect" ng-show="input.bits.length === 1" ng-click="input.value = (input.value + 1) % 2;input.inputChanged(); simulatedChip.inputChanged(input)">1/0</span>
                                 <span class="input-group-addon button10 noselect" ng-show="input.bits.length > 1" ng-click=""><i class="fa fa-ellipsis-h"></i></span>
@@ -50,7 +50,7 @@
                 <div ng-if="item.name === 'Output pins'" class="gridsterContentEnvelope">
                     <div class="gridsterContent  panel-body">
                         <div class="form-group myFormGroup">
-                            <div class="inputs input-group"  ng-repeat="output in simulatedChip.outputs track by $index">
+                            <div class="inputs input-group"  ng-repeat="output in simulatedChip.getOutputs() track by $index">
                                 <span class="input-group-addon noselect normalCursor" style="color: {{output.color}}" ng-mouseenter="output.hover = true" ng-mouseleave="output.hover = false" ng-class="{'pinHovered':output.hover}"><strong>{{output.name}}</strong></span>
                                 <input disabled="true" class="form-control inputForPin" name="input{{$index}}" ng-value="output.value"  ng-class="{'label-success':output.value == 1 && output.bits.length === 1, 'label-danger':output.value == 0 && output.bits.length === 1, 'label-default':output.bits.length > 1}">
                             </div>
@@ -68,7 +68,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="pin in simulatedChip.internalPins" ng-if="!pin.inOut" ng-mouseenter="pin.hover = true" ng-mouseleave="pin.hover = false" ng-class="{'pinHovered':pin.hover}">
+                                <tr ng-repeat="pin in simulatedChip.getInternalPins()" ng-if="!pin.isInOut()" ng-mouseenter="pin.hover = true" ng-mouseleave="pin.hover = false" ng-class="{'pinHovered':pin.hover}">
                                     <td style="color: {{pin.color}}"><strong>{{pin.name}}</strong></td>
                                     <td><span class="label myLabel" ng-class="{'label-success':pin.value == 1 && pin.bits.length === 1, 'label-danger':pin.value == 0 && pin.bits.length === 1, 'label-default': pin.bits.length > 1}">{{pin.value}}</span></td>
                                     <td style="width: 100%"></td>

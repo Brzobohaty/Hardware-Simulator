@@ -5,10 +5,9 @@
 angular.module('app')
 
         /**
-         * Slouží pro vytváření objektu pro simulování
+         * Slouží pro vytváření částí simulovaného objektu
          */
-        .factory('ChipSimulationService', ['ChipPart', 'SimulatedChipModel', function (ChipPart, SimulatedChipModel) {
-                var simulatedChip; //{SimulatedChipModel} simulovatelný chip
+        .factory('ChipSimulationService', ['ChipPart', function (ChipPart) {
                 var chips; //{Array} pole všech chipů v aplikaci
                 var builtInChips = { //seznam builtIn chipů
                     'Not': new ChipPart('Not', {'in': {value: 0}}, {'out': {value: 1}}, function () {
@@ -26,70 +25,16 @@ angular.module('app')
                 };
 
                 return {
-                    getSimulatedChip: getSimulatedChip,
-                    addChipPart: addChipPart,
-                    reset: reset,
-                    setChipsArray: setChipsArray
+                    setChipsArray: setChipsArray,
+                    getUserChip: getUserChip,
+                    getBuiltInChip: getBuiltInChip
                 };
 
                 /**
-                 * @param {Array} chipss pole všech chipů v aplikaci
+                 * @param {Array} chipss pole všech chipů v aplikaci (ChipModel)
                  */
                 function setChipsArray(chipss) {
                     chips = chipss;
-                }
-
-                /** 
-                 * @return {Object} simulovatelný chip 
-                 */
-                function getSimulatedChip() {
-                    return simulatedChip;
-                }
-
-                /**
-                 * Resetuje simulovaný chip
-                 */
-                function reset() {
-                    simulatedChip = new SimulatedChipModel();
-                }
-
-                /**
-                 * Přidá část obvodu do současného simulovatelného objektu.
-                 * @param {Object} part
-                 * @param {ChipModel} chip kompletní chip (pro nastavení chybových hlášek)
-                 * @return {Boolean} false pokud nastala chyba při kompilaci
-                 */
-                function addChipPart(part, chip) {
-                    var chipPartBuiltIn = _getBuiltInChip(part.name);
-                    if (chipPartBuiltIn) {
-                        chipPartBuiltIn.setPins(simulatedChip.internalPins, part, chip);
-                        part.builtInChip = chipPartBuiltIn;
-                    }
-                    var chipPartUser = _getUserChip(part.name);
-                    if (chipPartUser) {
-                        chipPartUser.setPins(simulatedChip.internalPins, part, chip);
-                        part.userChip = chipPartUser;
-                    }
-                    if (!chipPartBuiltIn && !chipPartUser) {
-                        chip.setParts(simulatedChip.parts);
-                        var errMes = 'There is not chip called ' + part.name;
-                        part.nameToken.setErrorMes(errMes);
-                        chip.setCompileError(part.row + 1,errMes);
-                        return false;
-                    }
-                    if (chipPartBuiltIn && !chipPartBuiltIn.error) {
-                        part.builtIn = true;
-                        chipPartBuiltIn.active = true;
-                        chipPartBuiltIn.reCompute();
-                    } else if (chipPartUser && !chipPartUser.error) {
-                        part.builtIn = false;
-                        chipPartUser.active = true;
-                        chipPartUser.reCompute();
-                    } else {
-                        return false;
-                    }
-                    _clearErrors(chip, part);
-                    return true;
                 }
 
                 /**
@@ -97,7 +42,7 @@ angular.module('app')
                  * @param {String} name jméno chipu
                  * @returns {ChipPart} chip nebo false, pokud nebyl nalezen odpovídající buildInChip
                  */
-                function _getUserChip(name) {
+                function getUserChip(name) {
                     var userChip = _.findWhere(chips, {name: name});
                     if (userChip && userChip.simulatedChip) {
                         var userSimulatedChip = angular.copy(userChip.simulatedChip);
@@ -117,24 +62,11 @@ angular.module('app')
                 }
 
                 /**
-                 * Vynuluje všechny errory na chipu
-                 * @param {ChipModel} chip kompletní chip
-                 * @param {Object} part část chipu
-                 */
-                function _clearErrors(chip, part) {
-                    chip.clearCompileError();
-                    part.nameToken.setErrorMes(null);
-                    for (var pinName in part.pins) {
-                        part.pins[pinName].leftToken.setErrorMes(null);
-                    }
-                }
-
-                /**
                  * Fabrika na builtin chipy.
                  * @param {String} name jméno chipu
                  * @returns {ChipPart} chip nebo false, pokud nebyl nalezen odpovídající buildInChip
                  */
-                function _getBuiltInChip(name) {
+                function getBuiltInChip(name) {
                     if (builtInChips.hasOwnProperty(name)) {
                         return angular.copy(builtInChips[name]);
                     }

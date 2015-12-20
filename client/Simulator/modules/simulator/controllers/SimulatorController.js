@@ -17,6 +17,7 @@ angular.module('app.simulator')
                     
                     //přiřazení proměnných
                     $scope.rowsArray = chip.getTokens(); //řádky HDL kódu
+                    $scope.chipName = chip.getName();
 
                     //přiřazení funkcí
                     $scope.mouseOverRow = mouseOverRow;
@@ -65,8 +66,9 @@ angular.module('app.simulator')
                  * Vytvoří okna pro stavy pinů jednotlivých částí obvodu
                  */
                 function _makePartsWindows() {
-                    for (var key in $scope.simulatedChip.parts) {
-                        $scope.standardItems.push({sizeX: 1, sizeY: 1, name: 'Part pins', active: false, partId: $scope.simulatedChip.parts[key].id, part: $scope.simulatedChip.parts[key]});
+                    var parts = $scope.simulatedChip.getParts()
+                    for (var key in parts) {
+                        $scope.standardItems.push({sizeX: 1, sizeY: 1, name: 'Part pins', active: false, partId: parts[key].id, part: parts[key]});
                     }
                 }
 
