@@ -37,11 +37,11 @@ angular.module('app')
                     setPins: function (internalPins, part, chip) {
                         for (var pinName in part.pins) {
                             if (this.inputs.hasOwnProperty(pinName)) {
-                                this.inputs[pinName] = new ChipPartPinModel(pinName, internalPins[part.pins[pinName].assignment], this);
+                                this.inputs[pinName] = new ChipPartPinModel(pinName, internalPins[part.pins[pinName].assignment], part.pins[pinName].bitsAssigned, this);
                                 part.pins[pinName].internalPin = internalPins[part.pins[pinName].assignment];
                                 part.pins[pinName].rightToken.pin = internalPins[part.pins[pinName].assignment];
                             } else if (this.outputs.hasOwnProperty(pinName)) {
-                                this.outputs[pinName] = new ChipPartPinModel(pinName, internalPins[part.pins[pinName].assignment], this);
+                                this.outputs[pinName] = new ChipPartPinModel(pinName, internalPins[part.pins[pinName].assignment], part.pins[pinName].bitsAssigned, this);
                                 part.pins[pinName].internalPin = internalPins[part.pins[pinName].assignment];
                                 part.pins[pinName].rightToken.pin = internalPins[part.pins[pinName].assignment];
                             } else {
@@ -65,22 +65,19 @@ angular.module('app')
                     },
                     /**
                      * Nastaví listener pro vstupy tohoto obvodu 
-                     * (při každé změně vstupu vypočítá hodnotu na výstupu a 
-                     * zavolá callbacky napojené na výstupní pin)
+                     * (při každé změně vstupu vypočítá hodnotu na výstupu)
                      */
                     _setListener: function () {
                         for (var inputName in this.inputs) {
-                            this.inputs[inputName].internalPin.callbacks.push(this.inputs[inputName]);
+                            this.inputs[inputName].setCallbacks();
                         }
                     },
                     /**
                      * Zavolá callbacky napojené na výstupní pin
                      */
-                    _runOutputCallbacks: function () {
+                    runOutputCallbacks: function () {
                         for (var outputName in this.outputs) {
-                            for (var i = 0; i < this.outputs[outputName].internalPin.callbacks.length; i++) {
-                                this.outputs[outputName].internalPin.callbacks[i].setValues();
-                            }
+                            this.outputs[outputName].runOutputCallbacks();
                         }
                     },
                     /**
@@ -99,6 +96,21 @@ angular.module('app')
                             }
                         }
                         return false;
+                    },
+                    /**
+                     * Přepočítá hodnoty na výstupu podle aktuálních hodnot na vstupu.
+                     */
+                    reCompute: function () {
+//                        for (var inputName in this.inputs) {
+//                            this.inputs[inputName].inputChanged();
+//                        }
+                        
+                        if (this.userSimulatedChip && !this._compute) {
+                            this.userSimulatedChip.reComputeAll();
+                        } else {
+                            this._compute();
+                        }
+                        this.runOutputCallbacks();
                     }
                 };
 

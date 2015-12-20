@@ -7,7 +7,7 @@ angular.module('app')
         /**
          * Představuje object chipu, který může být přímo simulován
          */
-        .factory('SimulatedChip', ['ChipPart', function (ChipPart) {
+        .factory('SimulatedChip', [function () {
                 var SimulatedChip = function () {
                     this.name; //název chipu
                     this.internalPins = {}; //mapa interních pinů, včetně vstupních a výstupních
@@ -21,8 +21,10 @@ angular.module('app')
                      * @param {Object} input (name, value, callbacks)
                      */
                     inputChanged: function (input) {
-                        for (var j = 0; j < input.callbacks.length; j++) {
-                            input.callbacks[j].setValues();
+                        for (var index in input.bits) {
+                            for (var index2 in input.bits[index].callbacks) {
+                                input.bits[index].callbacks[index2].setValues();
+                            }
                         }
                     },
                     /**
@@ -30,14 +32,28 @@ angular.module('app')
                      * @returns {Object} vstup
                      */
                     getInput: function (name) {
-                        return _.findWhere(this.inputs, {name:name});
+                        return _.findWhere(this.inputs, {name: name});
                     },
                     /**
                      * Přepočítá veškěré hodnoty na vnitřních a výstupních inech podle hodnot na vstupních pinech
                      */
-                    reComputeAll: function(){
-                        for(var index in this.inputs){
+                    reComputeAll: function () {
+                        for (var index in this.inputs) {
                             this.inputChanged(this.inputs[index]);
+                        }
+                    },
+                    /**
+                     * Přidá pin do interních pinů simulovaného objektu
+                     * @param {PinModel} pin
+                     * @param {Object} tokenOfPin token daného pinu
+                     */
+                    addInternalPin: function (pin, tokenOfPin) {
+                        var name = pin.getName();
+                        if (!this.internalPins.hasOwnProperty(name)) {
+                            pin.generateColor();
+                            this.internalPins[name] = pin;
+                            tokenOfPin.pin = pin;
+                            pin.outputChanged(); //aby se naformátoval vstup
                         }
                     }
                 };

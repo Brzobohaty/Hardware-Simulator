@@ -12,16 +12,16 @@ angular.module('app')
                 var chips;
                 var builtInChips = {
                     'Not': new ChipPart('Not', {'in': {value: 0}}, {'out': {value: 1}}, function () {
-                        this.outputs['out'].internalPin.value = !this.inputs['in'].internalPin.value;
+                        this.outputs['out'].bits[0].value = Number(!this.inputs['in'].bits[0].value);
                     }),
                     'And': new ChipPart('And', {'a': {value: 0}, 'b': {value: 0}}, {'out': {value: 0}}, function () {
-                        this.outputs['out'].internalPin.value = this.inputs['a'].internalPin.value & this.inputs['b'].internalPin.value;
+                        this.outputs['out'].bits[0].value = Number(this.inputs['a'].bits[0].value & this.inputs['b'].bits[0].value);
                     }),
                     'Or': new ChipPart('Or', {'a': {value: 0}, 'b': {value: 0}}, {'out': {value: 0}}, function () {
-                        this.outputs['out'].internalPin.value = this.inputs['a'].internalPin.value | this.inputs['b'].internalPin.value;
+                        this.outputs['out'].bits[0].value = Number(this.inputs['a'].bits[0].value | this.inputs['b'].bits[0].value);
                     }),
                     'Nand': new ChipPart('Nand', {'a': {value: 0}, 'b': {value: 0}}, {'out': {value: 0}}, function () {
-                        this.outputs['out'].internalPin.value = !(this.inputs['a'].internalPin.value & this.inputs['b'].internalPin.value);
+                        this.outputs['out'].bits[0].value = Number(!(this.inputs['a'].bits[0].value & this.inputs['b'].bits[0].value));
                     })
                 };
 
@@ -79,11 +79,11 @@ angular.module('app')
                     if (chipPartBuiltIn && !chipPartBuiltIn.error) {
                         part.builtIn = true;
                         chipPartBuiltIn.active = true;
-                        chipPartBuiltIn._compute();
+                        chipPartBuiltIn.reCompute();
                     } else if (chipPartUser && !chipPartUser.error) {
                         part.builtIn = false;
                         chipPartUser.active = true;
-                        chipPartUser._compute();
+                        chipPartUser.reCompute();
                     } else {
                         return false;
                     }

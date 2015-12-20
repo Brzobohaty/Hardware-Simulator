@@ -65,7 +65,7 @@ angular.module('app')
                  * @returns {array} pole tokenů
                  */
                 function _splitToTokens(code) {
-                    var regexp = /([ ]+|,|;|:|=|{|}|\(|\))(?![^<]*(<\/span>))/g;
+                    var regexp = /([ ]+|\[|\]|,|;|:|=|{|}|\(|\))(?![^<]*(<\/span>))/g;
                     var splited = code.split(regexp);
 
                     return _clearArray(splited);

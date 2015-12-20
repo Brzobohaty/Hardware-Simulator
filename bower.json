@@ -20,6 +20,7 @@
     "ngFileReader": "~0.0.6",
     "underscore": "~1.8.3",
     "angular-underscore": "~0.5.0",
-    "angular-animate": "~1.4.8"
+    "angular-animate": "~1.4.8",
+    "bitset.js": "~3.0.0"
   }
 }

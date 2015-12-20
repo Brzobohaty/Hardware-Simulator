@@ -252,6 +252,7 @@ input[type=number]::-webkit-outer-spin-button {
 
 td span.myLabel{
     padding-top: 4px;
+    font-family: monospace;
 }
 
 .pinHovered{
@@ -426,4 +427,13 @@ td span.myLabel{
 
 .jumbotron{
     text-align: center;
+}
+
+.label-default {
+    background-color: #777 !important;
+}
+
+.inputForPin{
+    text-align: right;
+    font-family: monospace;
 }
