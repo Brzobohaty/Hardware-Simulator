@@ -32,6 +32,7 @@ angular.module('app')
                      * Asociuje interní piny obvodu s piny tohoto chipu
                      * @param {Object} internalPins mapa interních pinů obvodu
                      * @param {Object} part chip předtavující část obvodu
+                     * @param {ChipModel} chip hlavní chip jehož je tento částí
                      * @return {Boolean} false pokud nastala chyba při kompilaci
                      */
                     setPins: function (internalPins, part, chip) {
@@ -47,7 +48,7 @@ angular.module('app')
                             } else {
                                 var errMes = 'Part "' + part.name + '" hasn\'t pin called "' + pinName + '"';
                                 part.pins[pinName].leftToken.setErrorMes(errMes);
-                                chip.compileError = {'row': part.row + 1, 'message': errMes};
+                                chip.setCompileError(part.row + 1, errMes);
                                 this.error = true;
                                 return false;
                             }
@@ -60,7 +61,7 @@ angular.module('app')
                         } else {
                             var errMes = 'Not used all pins! Is missing pin "' + missingPin + '"';
                             part.nameToken.setErrorMes(errMes);
-                            chip.compileError = {'row': part.row + 1, 'message': errMes};
+                            chip.setCompileError(part.row + 1, errMes);
                             this.error = true;
                             return false;
                         }

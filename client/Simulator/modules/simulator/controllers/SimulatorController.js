@@ -5,9 +5,9 @@ angular.module('app.simulator')
         /**
          * Simulátor
          */
-        .controller('SimulatorController', ['$scope', '$rootScope', '$sce', 'CompilerService', 'ChipsModel', function ($scope, $rootScope, $sce, CompilerService, ChipsModel) {
+        .controller('SimulatorController', ['$scope', '$rootScope', '$sce', 'CompilerService', 'ChipsService', function ($scope, $rootScope, $sce, CompilerService, ChipsService) {
                 $rootScope.page = 'simulator';
-                var chip = ChipsModel.getSimulatedChip();
+                var chip = ChipsService.getSimulatedChip();
                 
                 if (chip) {
                     $scope.simulatedChip = chip.simulatedChip;
@@ -16,7 +16,7 @@ angular.module('app.simulator')
                     _makePartsWindows();
                     
                     //přiřazení proměnných
-                    $scope.rowsArray = chip.tokens; //řádky HDL kódu
+                    $scope.rowsArray = chip.getTokens(); //řádky HDL kódu
 
                     //přiřazení funkcí
                     $scope.mouseOverRow = mouseOverRow;

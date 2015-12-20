@@ -9,16 +9,16 @@ angular.module('app')
          */
         .factory('CompilerService', ['ParserService', 'ChipSimulationService', 'PinModel', function (ParserService, ChipSimulationService, PinModel) {
                 var tokens; //dvourozměrné pole řádků a tokenů
-                var curToken; //současný token
-                var currentRow = 0; //současné číslo řádek
-                var currentTokenOnRow = 0; //současné pořadí tokenu na řádku
+                var _curToken; //{TokenModel} současný token
+                var currentRow = 0; //{int} současné číslo řádek
+                var currentTokenOnRow = 0; //{int} současné pořadí tokenu na řádku
                 var notTokenRegex = /^<span class=.*<\/span>$|\s+|\n/; //regex pro komentáře a bílé znaky
                 var nameRegex = /^[A-Za-z][A-Za-z0-9]*$/; //regex pro názvy chipů a pinů
                 var numberRegex = /^[0-9]*$/; //regex pro čísla
-                var partId = 0; //čítač id částí obvodu
-                var chip; //Obecná obálka chipu
+                var partId = 0; //{int} čítač id částí obvodu
+                var _chip; //{ChipModel} Obecná obálka chipu
                 var scope;
-                var chips; //seznam všech nahraných chipů v apliakci
+                var chips; //{ChipModel} seznam všech nahraných chipů v aplikaci
 
                 return {
                     compile: compile,
@@ -34,30 +34,25 @@ angular.module('app')
 
                 /**
                  * Zkompiluje celý obvod a případné chybové hlášky vloží přímo do daného pole
-                 * @param {Object} chipp object představující chip a obsahující text HDL v surové podobě
+                 * @param {ChipModel} chipp object představující chip a obsahující text HDL v surové podobě
                  */
                 function compile(chipp, scopee) {
                     currentRow = 0;
                     currentTokenOnRow = 0;
                     partId = 0;
-                    chip = chipp;
+                    _chip = chipp;
                     PinModel.restartColors();
-                    chip.compileError = null;
-                    chip.parts = null;
-                    chip.progress = null;
-                    chip.simulatedChip = null;
-                    chip.name = null;
                     ChipSimulationService.reset();
-                    tokens = ParserService.parsePlainTextToRowsOfTokens(chip.plainText);
-                    chip.tokens = tokens;
+                    tokens = ParserService.parsePlainTextToRowsOfTokens(_chip.getPlainText());
+                    _chip.setTokens(tokens);
                     scope = scopee;
                     if (_compileHeader() && _compileInputs() && _compileOutputs() && _compileParts() && _setParts()) {
-                        chip.simulatedChip = ChipSimulationService.getSimulatedChip();
-                        chip.compileError = false;
+                        _chip.setSimulatedChip(ChipSimulationService.getSimulatedChip());
+                        _chip.clearCompileError();
                         return;
                     }
-                    if (!chip.compileError) {
-                        chip.compileError = {'row': currentRow + 1, 'message': curToken.getErrorMes()};
+                    if (!_chip.compileError) {
+                        _chip.setCompileError(currentRow + 1, _curToken.getErrorMes());
                     }
                 }
 
@@ -67,7 +62,7 @@ angular.module('app')
                  */
                 function _setParts() {
                     for (var i = 0; i < ChipSimulationService.getSimulatedChip().parts.length; i++) {
-                        if (!ChipSimulationService.addChipPart(ChipSimulationService.getSimulatedChip().parts[i], chip)) {
+                        if (!ChipSimulationService.addChipPart(ChipSimulationService.getSimulatedChip().parts[i], _chip)) {
                             return false;
                         }
                     }
@@ -85,7 +80,7 @@ angular.module('app')
                         specialArray.push(pin);
                         pin.setInOut();
                     }
-                    ChipSimulationService.getSimulatedChip().addInternalPin(pin,tokenOfPin);
+                    ChipSimulationService.getSimulatedChip().addInternalPin(pin, tokenOfPin);
                 }
 
                 /**
@@ -94,10 +89,13 @@ angular.module('app')
                  * @returns {Boolean} true pokud je chip unikátní
                  */
                 function isChipUnique(chipName) {
-                    if (_.findWhere(chips, {name: chipName})) {
+                    var foundedChips = chips.filter(function (chip) {
+                        return chip.getName() === chipName;
+                    });
+                    if (foundedChips.length > 0) {
                         var errMes = 'Chip with that name is not unique';
-                        curToken.setErrorMes(errMes); 
-                        chip.compileError = {'row': currentRow + 1, 'message': errMes};
+                        _curToken.setErrorMes(errMes);
+                        _chip.setCompileError(currentRow + 1, errMes);
                         return false;
                     }
                     return true;
@@ -108,21 +106,23 @@ angular.module('app')
                  * @return {boolean} false pokud nastala chyba při kompilaci
                  */
                 function _compileHeader() {
-                    curToken = tokens[0][0];
-                    if (curToken.getContent() !== 'CHIP') {
+                    _curToken = tokens[0][0];
+                    if (_curToken.getContent() !== 'CHIP') {
                         _next();
                     }
                     if (!expectKeyword('CHIP')) {
                         return false;
                     }
                     _next();
-                    if (!(ChipSimulationService.getSimulatedChip().name = expectChipName())) {
+                    var chipName;
+                    if (!(chipName = expectChipName())) {
                         return false;
                     }
-                    if (!isChipUnique(ChipSimulationService.getSimulatedChip().name)) {
+                    if (!isChipUnique(chipName)) {
                         return false;
                     }
-                    chip.name = ChipSimulationService.getSimulatedChip().name;
+                    ChipSimulationService.getSimulatedChip().name = chipName;
+                    _chip.setName(chipName);
                     _next();
                     if (!expectChar('{')) {
                         return false;
@@ -143,7 +143,7 @@ angular.module('app')
                     if (!expectInputOutputPin(ChipSimulationService.getSimulatedChip().inputs)) {
                         return false;
                     }
-                    while (curToken.getContent() === ',') {
+                    while (_curToken.getContent() === ',') {
                         _next();
                         if (!expectInputOutputPin(ChipSimulationService.getSimulatedChip().inputs)) {
                             return false;
@@ -168,7 +168,7 @@ angular.module('app')
                     if (!expectInputOutputPin(ChipSimulationService.getSimulatedChip().outputs)) {
                         return false;
                     }
-                    while (curToken.getContent() === ',') {
+                    while (_curToken.getContent() === ',') {
                         _next();
                         if (!expectInputOutputPin(ChipSimulationService.getSimulatedChip().outputs)) {
                             return false;
@@ -198,7 +198,7 @@ angular.module('app')
                         return false;
                     }
                     _next();
-                    while (curToken.getContent() !== '}') {
+                    while (_curToken.getContent() !== '}') {
                         if (!expectPart()) {
                             return false;
                         }
@@ -218,10 +218,10 @@ angular.module('app')
                                 'id': ++partId,
                                 'name': '',
                                 'pins': {},
-                                'nameToken': curToken,
+                                'nameToken': _curToken,
                                 'row': currentRow
                             };
-                    curToken.partId = partId;
+                    _curToken.partId = partId;
                     if (!(chip.name = expectChipName())) {
                         return false;
                     }
@@ -233,7 +233,7 @@ angular.module('app')
                     if (!expectPinAssignment(chip)) {
                         return false;
                     }
-                    while (curToken.getContent() === ',') {
+                    while (_curToken.getContent() === ',') {
                         _next();
                         if (!expectPinAssignment(chip)) {
                             return false;
@@ -259,12 +259,12 @@ angular.module('app')
                 function expectPinAssignment(chip) {
                     var pinNameLeft;
                     var pinRight;
-                    var leftToken = curToken;
+                    var leftToken = _curToken;
                     if (!(pinNameLeft = expectPinName())) {
                         return false;
                     }
                     if (chip.pins.hasOwnProperty(pinNameLeft)) {
-                        curToken.setErrorMes('"' + pinNameLeft + '" pin occurs again');
+                        _curToken.setErrorMes('"' + pinNameLeft + '" pin occurs again');
                         return false;
                     }
                     _next();
@@ -272,7 +272,7 @@ angular.module('app')
                         return false;
                     }
                     _next();
-                    var rightToken = curToken;
+                    var rightToken = _curToken;
                     if (!(pinRight = expectInternalPin())) {
                         return false;
                     }
@@ -285,7 +285,7 @@ angular.module('app')
                     };
                     return true;
                 }
-                
+
                 /**
                  * Zkontroluje, zda je v následujících tokenech validní deklarace pinu a pokud ne, tak uloží do tokenu chybovou hlášku.
                  * @param {Array} specialArray pole vstupů nebo výstupů nebo null
@@ -296,16 +296,16 @@ angular.module('app')
                     if (!(pinName = expectPinName())) {
                         return false;
                     }
-                    var tokenOfPin = curToken;
+                    var tokenOfPin = _curToken;
                     var pinBitSize = 1;
                     _next();
-                    if (curToken.getContent() === '[') {
+                    if (_curToken.getContent() === '[') {
                         _next();
-                        if (!numberRegex.test(curToken.getContent())) {
-                            curToken.setErrorMes('Expected number but found "' + curToken.getContent() + '"');
+                        if (!numberRegex.test(_curToken.getContent())) {
+                            _curToken.setErrorMes('Expected number but found "' + _curToken.getContent() + '"');
                             return false;
                         }
-                        pinBitSize = curToken.getContent();
+                        pinBitSize = _curToken.getContent();
                         _next();
                         if (!expectChar(']')) {
                             return false;
@@ -316,7 +316,7 @@ angular.module('app')
                     _pushPinToArrays(tokenOfPin, specialArray, pin);
                     return pin;
                 }
-                
+
                 /**
                  * Zkontroluje, zda je v následujících tokenech validní přiřazení interního pinu a pokud ne, tak uloží do tokenu chybovou hlášku.
                  * @returns {string/boolean} false pokud nastala chyba při kompilaci, jinak pin
@@ -326,23 +326,23 @@ angular.module('app')
                     if (!(pinName = expectPinName())) {
                         return false;
                     }
-                    var tokenOfPin = curToken;
+                    var tokenOfPin = _curToken;
                     var pinBitSize = 1;
                     var bitsAssigned = [];
                     _next();
-                    if (curToken.getContent() === '[') {
+                    if (_curToken.getContent() === '[') {
                         _next();
-                        if (!numberRegex.test(curToken.getContent())) {
-                            curToken.setErrorMes('Expected number but found "' + curToken.getContent() + '"');
+                        if (!numberRegex.test(_curToken.getContent())) {
+                            _curToken.setErrorMes('Expected number but found "' + _curToken.getContent() + '"');
                             return false;
                         }
-                        bitsAssigned.push(curToken.getContent());
+                        bitsAssigned.push(_curToken.getContent());
                         _next();
                         if (!expectChar(']')) {
                             return false;
                         }
                         _next();
-                    }else{
+                    } else {
                         bitsAssigned.push(0);
                     }
                     var pin = new PinModel(pinName, pinBitSize, bitsAssigned);
@@ -355,11 +355,11 @@ angular.module('app')
                  * @return {string/boolean} false pokud nastala chyba při kompilaci, jinak název pinu
                  */
                 function expectPinName() {
-                    if (!nameRegex.test(curToken.getContent())) {
-                        curToken.setErrorMes('Expected chip pin name. And chip pin name must start with letter and can containt just letters or digits. But found "' + curToken.getContent() + '"');
+                    if (!nameRegex.test(_curToken.getContent())) {
+                        _curToken.setErrorMes('Expected chip pin name. And chip pin name must start with letter and can containt just letters or digits. But found "' + _curToken.getContent() + '"');
                         return false;
                     } else {
-                        return curToken.getContent();
+                        return _curToken.getContent();
                     }
                 }
 
@@ -368,11 +368,11 @@ angular.module('app')
                  * @return {string/boolean} false pokud nastala chyba při kompilaci, jinak název obvodu
                  */
                 function expectChipName() {
-                    if (!nameRegex.test(curToken.getContent())) {
-                        curToken.setErrorMes('Expected chip name. And chip name must start with letter and can containt just letters or digits. But found "' + curToken.getContent() + '"');
+                    if (!nameRegex.test(_curToken.getContent())) {
+                        _curToken.setErrorMes('Expected chip name. And chip name must start with letter and can containt just letters or digits. But found "' + _curToken.getContent() + '"');
                         return false;
                     } else {
-                        return curToken.getContent();
+                        return _curToken.getContent();
                     }
                 }
 
@@ -382,8 +382,8 @@ angular.module('app')
                  * @return {boolean} false pokud nastala chyba při kompilaci
                  */
                 function expectChar(char) {
-                    if (curToken.getContent() !== char) {
-                        curToken.setErrorMes('Expected "' + char + '" but found "' + curToken.getContent() + '"');
+                    if (_curToken.getContent() !== char) {
+                        _curToken.setErrorMes('Expected "' + char + '" but found "' + _curToken.getContent() + '"');
                         return false;
                     }
                     return true;
@@ -395,8 +395,8 @@ angular.module('app')
                  * @return {boolean} false pokud nastala chyba při kompilaci
                  */
                 function expectKeyword(keyword) {
-                    if (curToken.getContent() !== keyword) {
-                        curToken.setErrorMes('Expected "' + keyword + '" but found "' + curToken.getContent() + '"');
+                    if (_curToken.getContent() !== keyword) {
+                        _curToken.setErrorMes('Expected "' + keyword + '" but found "' + _curToken.getContent() + '"');
                         return false;
                     }
                     return true;
@@ -417,8 +417,8 @@ angular.module('app')
                     for (currentRow; currentRow < tokens.length; currentRow++) {
                         _calcProgress();
                         for (currentTokenOnRow; currentTokenOnRow < tokens[currentRow].length; currentTokenOnRow++) {
-                            curToken = tokens[currentRow][currentTokenOnRow];
-                            if (!notTokenRegex.test(curToken.getContent())) {
+                            _curToken = tokens[currentRow][currentTokenOnRow];
+                            if (!notTokenRegex.test(_curToken.getContent())) {
                                 return;
                             }
                         }
@@ -430,7 +430,7 @@ angular.module('app')
                  * Vypočítání compilačního postupu v procentech
                  */
                 function _calcProgress() {
-                    chip.progress = currentRow / (tokens.length / 100);
+                    _chip.progress = currentRow / (tokens.length / 100);
                     if (scope) {
                         if (!scope.$$phase) {
                             scope.$apply();

@@ -7,15 +7,15 @@ angular.module('app')
         /**
          * Představuje object chipu, který může být přímo simulován
          */
-        .factory('SimulatedChip', [function () {
-                var SimulatedChip = function () {
+        .factory('SimulatedChipModel', [function () {
+                var SimulatedChipModel = function () {
                     this.name; //název chipu
                     this.internalPins = {}; //mapa interních pinů, včetně vstupních a výstupních
                     this.inputs = []; //pole výstupů
                     this.outputs = []; //pole výstupů
                     this.parts = []; //pole částí obvodu
                 };
-                SimulatedChip.prototype = {
+                SimulatedChipModel.prototype = {
                     /**
                      * Vyvolá řetězec změň vnitřních pinů obvodu podle vstupních hodnot.
                      * @param {Object} input (name, value, callbacks)
@@ -58,5 +58,5 @@ angular.module('app')
                     }
                 };
 
-                return SimulatedChip;
+                return SimulatedChipModel;
             }]);

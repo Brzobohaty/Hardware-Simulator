@@ -6,10 +6,10 @@ angular.module('app')
         /**
          * Model všech chipů co jsou nahrané do aplikace
          */
-        .factory('ChipsModel', ['CompilerService', 'ChipModel', 'ChipSimulationService', function (CompilerService, ChipModel, ChipSimulationService) {
-                var chips = []; //pole chipů v aplikaci
-                var simulatedChipIndex = -1; //index chipu, který má být simulován
-                var chipsDependency = {}; //závislosti jednotlivých chipů na jiných chipech (klíč: název závisejícíh chipu, hodnota: pole závislých chipů)
+        .factory('ChipsService', ['CompilerService', 'ChipModel', 'ChipSimulationService', function (CompilerService, ChipModel, ChipSimulationService) {
+                var chips = []; //{ChipModel} pole chipů v aplikaci
+                var simulatedChipIndex = -1; //{int} index chipu, který má být simulován
+                var _chipsDependency = {}; //závislosti jednotlivých chipů na jiných chipech (klíč: název závisejícíh chipu, hodnota: pole závislých chipů)
 
                 CompilerService.setChipsArray(chips);
                 ChipSimulationService.setChipsArray(chips);
@@ -17,12 +17,12 @@ angular.module('app')
                 _testData();
 
                 return {
-                    chips: chips,
                     getSimulatedChipIndex: getSimulatedChipIndex,
                     setSimulatedChipIndex: setSimulatedChipIndex,
                     getSimulatedChip: getSimulatedChip,
                     deleteChip: deleteChip,
-                    addChip: addChip
+                    addChip: addChip,
+                    getChips: getChips
                 };
 
                 function getSimulatedChipIndex() {
@@ -32,9 +32,16 @@ angular.module('app')
                 function setSimulatedChipIndex(index) {
                     simulatedChipIndex = index;
                 }
-
+                
                 /**
-                 * @returns {Object} simulovatelný chip
+                 * @returns {array} všechny nahrané chipy v aplikaci
+                 */
+                function getChips() {
+                    return chips;
+                }
+                
+                /**
+                 * @returns {ChipModel} simulovatelný chip
                  */
                 function getSimulatedChip() {
                     return chips[simulatedChipIndex];
@@ -54,16 +61,17 @@ angular.module('app')
                     }
                     var chip = chips[index];
                     chips.splice(index, 1);
-                    _recompileDependent(chip, scope);
+                    _recompileDependent(chip.getName(), scope);
                 }
 
                 /**
                  * Přidá chip
-                 * @param {Object} chip
+                 * @param {string} chipFileName jméno chipu
+                 * @param {string} chipPlainText čistý HDL kód chipu
                  * @param {Scope} scope
                  */
-                function addChip(chip, scope) {
-                    chip = new ChipModel(chip.fileName, chip.plainText);
+                function addChip(chipFileName, chipPlainText, scope) {
+                    var chip = new ChipModel(chipFileName, chipPlainText);
                     chips.push(chip);
                     //tohle jsem zakomentoval kvuli testovani
 //                    setTimeout(function () {
@@ -71,39 +79,39 @@ angular.module('app')
                         scope.$apply();
                         if (chip.simulatedChip) {
                             _setDependency(chip.simulatedChip.parts, chip);
-                        } else if (chip.parts) {
-                            _setDependency(chip.parts, chip);
+                        } else if (chip.getParts()) {
+                            _setDependency(chip.getParts(), chip);
                         }
-                        _recompileDependent(chip, scope);
+                        _recompileDependent(chip.getName(), scope);
 //                    }, 0);
                 }
 
                 /**
                  * Nastaví do pole zavíslostí, že daný chip je závislý na jeho částech
                  * @param {Array} parts části právě zkompilovaného chipu
-                 * @param {Object} chip právě zkompilovaný chip
+                 * @param {ChipModel} chip právě zkompilovaný chip
                  */
                 function _setDependency(parts, chip) {
                     for (var index in parts) {
                         var partName = parts[index].name;
-                        if (!chipsDependency.hasOwnProperty(partName)) {
-                            chipsDependency[partName] = {};
+                        if (!_chipsDependency.hasOwnProperty(partName)) {
+                            _chipsDependency[partName] = {};
                         }
-                        if (!chipsDependency[partName].hasOwnProperty(chip.name)) {
-                            chipsDependency[partName][chip.name] = chip;
+                        if (!_chipsDependency[partName].hasOwnProperty(chip.getName())) {
+                            _chipsDependency[partName][chip.getName()] = chip;
                         }
                     }
                 }
 
                 /**
                  * Zavolá rekompilaci všech chipů, které jsou závislé na daném chipu
-                 * @param {Object} chip
-                 * @param {Object} scope
+                 * @param {String} chipName název chipu
+                 * @param scope
                  */
-                function _recompileDependent(chip, scope) {
-                    if (chipsDependency.hasOwnProperty(chip.name)) {
-                        for (var index in chipsDependency[chip.name]) {
-                            chipsDependency[chip.name][index].recompile(scope);
+                function _recompileDependent(chipName, scope) {
+                    if (_chipsDependency.hasOwnProperty(chipName)) {
+                        for (var index in _chipsDependency[chipName]) {
+                            _chipsDependency[chipName][index].recompile(scope);
                             if(getSimulatedChip() && getSimulatedChip().compileError){
                                 simulatedChipIndex = -1;
                             }
@@ -151,7 +159,7 @@ angular.module('app')
                     ];
 
                     for (var i = 0; i < testchips.length; i++) {
-                        addChip(testchips[i], {$apply: function () {}});
+                        addChip(testchips[i].fileName, testchips[i].plainText, {$apply: function () {}});
                     }
                     
                     simulatedChipIndex = 7;

@@ -5,9 +5,9 @@ angular.module('app.project')
         /**
          * Přihlášení uživatele
          */
-        .controller('ProjectController', ['$scope', '$rootScope', 'CompilerService', 'ChipsModel', function ($scope, $rootScope, CompilerService, ChipsModel) {
+        .controller('ProjectController', ['$scope', '$rootScope', 'ChipsService', function ($scope, $rootScope, ChipsService) {
                 $rootScope.page = 'project';
-                $scope.chipsModel = ChipsModel;
+                $scope.chipsModel = ChipsService;
 
                 //přiřazení funkcí
                 $scope.onReadedFile = onReadedFile;
@@ -21,7 +21,7 @@ angular.module('app.project')
                         part.builtInChip.active = false;
                         part.userChip.active = true;
                     }
-                    $scope.chipsModel.getSimulatedChip().simulatedChip.reComputeAll();
+                    ChipsService.getSimulatedChip().simulatedChip.reComputeAll();
                 }
 
                 /**
@@ -30,7 +30,6 @@ angular.module('app.project')
                  * @param {File} file
                  */
                 function onReadedFile(e, file) {
-                    var chip = {'fileName': file.name, 'plainText': e.target.result};
-                    ChipsModel.addChip(chip, $scope);
+                    ChipsService.addChip(file.name, e.target.result, $scope);
                 }
             }]);

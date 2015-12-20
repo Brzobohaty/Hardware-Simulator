@@ -2,9 +2,9 @@
     <div class="panel panel-default">
         <div class="panel-body">
             <div class="col-md-12">
-                <div class="file-row col-md-12 row chipFile" ng-repeat="chip in chipsModel.chips track by $index">
+                <div class="file-row col-md-12 row chipFile" ng-repeat="chip in chipsModel.getChips() track by $index">
                     <div  class="col-md-2">
-                        <p class="name"><span ng-show="chip.name">{{chip.name}} (</span>{{chip.fileName}}<span ng-show="chip.name">)</span></p>
+                        <p class="name"><span ng-show="chip.getName()">{{chip.getName()}} (</span>{{chip.getFileName()}}<span ng-show="chip.getName()">)</span></p>
                     </div>
                     <div class="col-md-3 sedButtons">
                         <button ng-disabled="chip.compileError" ng-show="chipsModel.getSimulatedChipIndex() !== $index" class="btn btn-primary" ng-click="chipsModel.setSimulatedChipIndex($index)">
@@ -39,7 +39,7 @@
                         </div>
                     </div>
                     <script type="text/ng-template" id="myPopoverTemplate.html">
-                        <span ng-repeat="token in chip.tokens[chip.compileError.row-1]" ng-class="{'compileError':token.getErrorMes()}">{{token.getContent()}}</span>
+                        <span ng-repeat="token in chip.getTokens()[chip.compileError.row-1]" ng-class="{'compileError':token.getErrorMes()}">{{token.getContent()}}</span>
                     </script>
                     <div ng-show="chipsModel.getSimulatedChipIndex() === $index" class="col-md-12">
                         <h4>Chip consists of the following parts:</h4>
