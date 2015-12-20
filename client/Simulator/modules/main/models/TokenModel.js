@@ -55,7 +55,7 @@ angular.module('app')
                      */
                     function _isKeyWord() {
                         var regexp = /^CHIP|IN|OUT|PARTS$/;
-                        _isTokenKeyword = regexp.test(_that._content);
+                        _isTokenKeyword = regexp.test(_content);
                     }
                     
                     /********************************************************/
