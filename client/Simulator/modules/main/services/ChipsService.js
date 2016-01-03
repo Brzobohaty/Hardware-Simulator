@@ -77,8 +77,8 @@ angular.module('app')
 //                    setTimeout(function () {
                         CompilerService.compile(chip, scope);
                         scope.$apply();
-                        if (chip.simulatedChip) {
-                            _setDependency(chip.simulatedChip.parts, chip);
+                        if (chip.getSimulatedChip()) {
+                            _setDependency(chip.getSimulatedChip().getParts(), chip);
                         } else if (chip.getParts()) {
                             _setDependency(chip.getParts(), chip);
                         }
@@ -93,7 +93,7 @@ angular.module('app')
                  */
                 function _setDependency(parts, chip) {
                     for (var index in parts) {
-                        var partName = parts[index].name;
+                        var partName = parts[index].getName();
                         if (!_chipsDependency.hasOwnProperty(partName)) {
                             _chipsDependency[partName] = {};
                         }
@@ -112,7 +112,7 @@ angular.module('app')
                     if (_chipsDependency.hasOwnProperty(chipName)) {
                         for (var index in _chipsDependency[chipName]) {
                             _chipsDependency[chipName][index].recompile(scope);
-                            if(getSimulatedChip() && getSimulatedChip().compileError){
+                            if(getSimulatedChip() && getSimulatedChip().getCompileError()){
                                 simulatedChipIndex = -1;
                             }
                         }
@@ -162,6 +162,6 @@ angular.module('app')
                         addChip(testchips[i].fileName, testchips[i].plainText, {$apply: function () {}});
                     }
                     
-                    simulatedChipIndex = 7;
+                    simulatedChipIndex = 1;
                 }
             }]);

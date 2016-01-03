@@ -9,58 +9,84 @@ angular.module('app')
          */
         .factory('TokenModel', [function () {
 
-                var Token = function (content) {
-                    /***********************public**************************/
-                    
+                /**
+                 * Objekt tokenu
+                 * @param {String} content obsah tokenu v surové podobě
+                 */
+                var TokenModel = function (content) {
+                    /***********************public**************************/ 
+
                     /***********************private*************************/
-                    var _content = content;
-                    var _errorMes = null;
-                    var _that = this;
-                    var _isTokenKeyword; //{boolean} příznak, zda se jedná o klíčové slovo
-                    
+                    this._pin = {}; //{PinModel} interní pin, který je repreyentován tímto tokenem
+                    this._content = content; //{String} obsah tokenu v surové podobě
+                    this._errorMes = null; //{String} Chybová hláška v případě chybné kompilace
+                    this._partId = null; //{int} id části chipu, kterou tento token představuje
+                    this._isTokenKeyword; //{boolean} příznak, zda se jedná o klíčové slovo
+
+                    /********************************************************/
+                    this._isKeyWord();
+                };
+                TokenModel.prototype = {
                     /************************public*************************/
-                    
+                    /**
+                     * Nastavení pinu, který je reprezentován tímto tokenem
+                     * @param {PinModel} interní pin, který je repreyentován tímto tokenem 
+                     */
+                    setPin: function (pin) {
+                        this._pin = pin;
+                    },
+                    /**
+                     * @returns {PinModel} interní pin, který je repreyentován tímto tokenem 
+                     */
+                    getPin: function () {
+                        return this._pin;
+                    },
                     /**
                      * @returns {Boolean} true, pokud je token klíčovým slovem
                      */
-                    this.isKeyword = function () {
-                        return _isTokenKeyword;
-                    };
-                    
+                    isKeyword: function () {
+                        return this._isTokenKeyword;
+                    },
                     /**
                      * @returns {String} Chybová hláška v případě chybné kompilace
                      */
-                    this.getErrorMes = function () {
-                        return _errorMes;
-                    };
-                    
+                    getErrorMes: function () {
+                        return this._errorMes;
+                    },
                     /**
                      * @param {String} content Chybová hláška v případě chybné kompilace
                      */
-                    this.setErrorMes = function (content) {
-                        _errorMes = content;
-                    };
-                    
+                    setErrorMes: function (content) {
+                        this._errorMes = content;
+                    },
+                    /**
+                     * @returns {int} id části chipu, kterou tento token představuje
+                     */
+                    getPartId: function () {
+                        return this._partId;
+                    },
+                    /**
+                     * @param {int} id části chipu, kterou tento token představuje
+                     */
+                    setPartId: function (id) {
+                        this._partId = id;
+                    },
                     /**
                      * @returns {String} obsah tokenu
                      */
-                    this.getContent = function () {
-                        return _content;
-                    };
-                    
+                    getContent: function () {
+                        return this._content;
+                    },
                     /***********************private**************************/
-                    
+
                     /**
                      * Nastaví příznak, zda je token klíčovým slovem
                      */
-                    function _isKeyWord() {
+                    _isKeyWord: function () {
                         var regexp = /^CHIP|IN|OUT|PARTS$/;
-                        _isTokenKeyword = regexp.test(_content);
+                        this._isTokenKeyword = regexp.test(this._content);
                     }
-                    
-                    /********************************************************/
-                    _isKeyWord();
                 };
 
-                return Token;
+                return TokenModel;
             }]);

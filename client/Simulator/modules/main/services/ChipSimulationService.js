@@ -7,20 +7,20 @@ angular.module('app')
         /**
          * Slouží pro vytváření částí simulovaného objektu
          */
-        .factory('ChipSimulationService', ['ChipPart', function (ChipPart) {
+        .factory('ChipSimulationService', ['ChipSimulatedPartModel', function (ChipSimulatedPartModel) {
                 var chips; //{Array} pole všech chipů v aplikaci
                 var builtInChips = { //seznam builtIn chipů
-                    'Not': new ChipPart('Not', {'in': {value: 0}}, {'out': {value: 1}}, function () {
-                        this.outputs['out'].bits[0].value = Number(!this.inputs['in'].bits[0].value);
+                    'Not': new ChipSimulatedPartModel({'in': null}, {'out': null}, function () {
+                        this.outputs['out'].getBits()[0].setValue(Number(!this.inputs['in'].getBits()[0].getValue()));
                     }),
-                    'And': new ChipPart('And', {'a': {value: 0}, 'b': {value: 0}}, {'out': {value: 0}}, function () {
-                        this.outputs['out'].bits[0].value = Number(this.inputs['a'].bits[0].value & this.inputs['b'].bits[0].value);
+                    'And': new ChipSimulatedPartModel({'a': null, 'b': null}, {'out': null}, function () {
+                        this.outputs['out'].getBits()[0].setValue(Number(this.inputs['a'].getBits()[0].getValue() & this.inputs['b'].getBits()[0].getValue()));
                     }),
-                    'Or': new ChipPart('Or', {'a': {value: 0}, 'b': {value: 0}}, {'out': {value: 0}}, function () {
-                        this.outputs['out'].bits[0].value = Number(this.inputs['a'].bits[0].value | this.inputs['b'].bits[0].value);
+                    'Or': new ChipSimulatedPartModel({'a': null, 'b': null}, {'out': null}, function () {
+                        this.outputs['out'].getBits()[0].setValue(Number(this.inputs['a'].getBits()[0].getValue() | this.inputs['b'].getBits()[0].getValue()));
                     }),
-                    'Nand': new ChipPart('Nand', {'a': {value: 0}, 'b': {value: 0}}, {'out': {value: 0}}, function () {
-                        this.outputs['out'].bits[0].value = Number(!(this.inputs['a'].bits[0].value & this.inputs['b'].bits[0].value));
+                    'Nand': new ChipSimulatedPartModel({'a': null, 'b': null}, {'out': null}, function () {
+                        this.outputs['out'].getBits()[0].setValue(Number(!(this.inputs['a'].getBits()[0].getValue() & this.inputs['b'].getBits()[0].getValue())));
                     })
                 };
 
@@ -40,31 +40,45 @@ angular.module('app')
                 /**
                  * Fabrika na chipy načtené od uživatele.
                  * @param {String} name jméno chipu
-                 * @returns {ChipPart} chip nebo false, pokud nebyl nalezen odpovídající buildInChip
+                 * @returns {ChipSimulatedPartModel} chip nebo false, pokud nebyl nalezen odpovídající buildInChip
                  */
                 function getUserChip(name) {
-                    var userChip = _.findWhere(chips, {name: name});
-                    if (userChip && userChip.simulatedChip) {
-                        var userSimulatedChip = angular.copy(userChip.simulatedChip);
+                    var userChip = findUserChip(name);
+                    if (userChip && userChip.getSimulatedChip()) {
+                        var userSimulatedChip = angular.copy(userChip.getSimulatedChip());
                         var inputs = {};
-                        for (var index in userSimulatedChip.inputs) {
-                            inputs[userSimulatedChip.inputs[index].name] = {'value':userSimulatedChip.inputs[index].value};
+                        for (var index in userSimulatedChip.getInputs()) {
+                            inputs[userSimulatedChip.getInputs()[index].getName()] = null;
                         }
                         var outputs = {};
-                        for (var index in userSimulatedChip.outputs) {
-                            outputs[userSimulatedChip.outputs[index].name] = {'value':userSimulatedChip.outputs[index].value};
+                        for (var index in userSimulatedChip.getOutputs()) {
+                            outputs[userSimulatedChip.getOutputs()[index].getName()] = null;
                         }
-                        var chiPart = new ChipPart(name, inputs, outputs, null, userSimulatedChip);  
-                        return chiPart;
+                        var chipPart = new ChipSimulatedPartModel(inputs, outputs, null, userSimulatedChip);  
+                        return chipPart;
                     } else {
                         return false;
                     }
+                }
+                
+                /**
+                 * Najde chip nahraný uživatelem 
+                 * @param {String} name jméno chipu
+                 * @returns {ChipModel} simulovatelný chip
+                 */
+                function findUserChip(name){
+                    for(var index in chips){
+                        if(chips[index].getName() === name){
+                            return chips[index];
+                        }
+                    }
+                    return null;
                 }
 
                 /**
                  * Fabrika na builtin chipy.
                  * @param {String} name jméno chipu
-                 * @returns {ChipPart} chip nebo false, pokud nebyl nalezen odpovídající buildInChip
+                 * @returns {ChipSimulatedPartModel} chip nebo false, pokud nebyl nalezen odpovídající buildInChip
                  */
                 function getBuiltInChip(name) {
                     if (builtInChips.hasOwnProperty(name)) {

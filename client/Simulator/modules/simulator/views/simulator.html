@@ -14,8 +14,8 @@
     <div gridster="gridsterOpts">
         <ul>
             <li class="panel-primary" gridster-item="item" ng-repeat="item in standardItems" ng-if="item.active">
-                <div class="panel-heading gridsterHeading"  ng-mouseenter="item.part.nameToken.hover = true" ng-mouseleave="item.part.nameToken.hover = false" ng-class="{'gridHeadHovered':item.part.nameToken.hover && item.part.id}">
-                    <h3 class="panel-title">{{item.name}} {{item.part.name}} <span class="closeIcon" ng-click="closeGrid(item)">×</span><span class="moveIcon fa fa-arrows"></span></h3>
+                <div class="panel-heading gridsterHeading"  ng-mouseenter="gridMouseEnter(item.part.getNameToken())" ng-mouseleave="gridMouseLeave(item.part.getNameToken())" ng-class="{'gridHeadHovered':item.part.getNameToken().hover && item.part.getId()}">
+                    <h3 class="panel-title">{{item.name}} {{item.part.getName()}} <span class="closeIcon" ng-click="closeGrid(item)">×</span><span class="moveIcon fa fa-arrows"></span></h3>
                 </div>
                 <div ng-if="item.name === 'HDL'" class="gridsterContentEnvelope">
                     <div class="rowNumbers" >
@@ -28,9 +28,9 @@
                     <div class="gridsterContent HDLgrid">
                         <p class="codeRow" ng-mouseenter="mouseOverRow($index + 1)" ng-mouseleave="mouseOverRow(0)" ng-repeat="row in rowsArray track by $index">
                             <span class="monospace" ng-repeat="token in row track by $index" ng-bind-html="saveBind(token.getContent())"
-                                  ng-class="{'keywords':token.isKeyword(), 'compileError':token.getErrorMes(), 'bold':token.pin.color, 'pinHovered':token.pin.hover && token.pin.color, 'label label-primary':token.partId, 'partNameHovered':token.hover && token.partId}"
+                                  ng-class="{'keywords':token.isKeyword(), 'compileError':token.getErrorMes(), 'bold':token.getPin().getColor(), 'pinHovered':token.getPin().hover && token.getPin().getColor(), 'label label-primary':token.getPartId(), 'partNameHovered':token.hover && token.getPartId()}"
                                   uib-popover="{{token.getErrorMes()}}" popover-trigger="mouseenter" popover-placement="right"
-                                  style="color: {{token.pin.color}}" ng-mouseenter="token.pin.hover = true; token.hover = true" ng-mouseleave="token.pin.hover = false; token.hover = false" ng-click="showPart(token.partId)"></span>
+                                  style="color: {{token.getPin().getColor()}}" ng-mouseenter="token.getPin().hover = true; token.hover = true" ng-mouseleave="token.getPin().hover = false; token.hover = false" ng-click="showPart(token.getPartId())"></span>
                             <span ng-show="row.length === 0">&#13;&#10;</span>
                         </p>
                     </div>
@@ -39,10 +39,10 @@
                     <div class="gridsterContent  panel-body">
                         <div class="form-group myFormGroup">
                             <div class="inputs input-group" ng-repeat="input in simulatedChip.getInputs() track by $index">
-                                <span class="input-group-addon noselect normalCursor" style="color: {{input.color}}" ng-mouseenter="input.hover = true" ng-mouseleave="input.hover = false" ng-class="{'pinHovered':input.hover}"><strong>{{input.name}}</strong></span>
-                                <span class="input-group-addon button10 noselect" ng-show="input.bits.length === 1" ng-click="input.value = (input.value + 1) % 2;input.inputChanged(); simulatedChip.inputChanged(input)">1/0</span>
-                                <span class="input-group-addon button10 noselect" ng-show="input.bits.length > 1" ng-click=""><i class="fa fa-ellipsis-h"></i></span>
-                                <input onClick="this.select();" class="form-control inputForPin" name="input{{$index}}" ng-model="input.value" ng-change="input.inputChanged();simulatedChip.inputChanged(input)" ng-class="{'label-success':input.bits[0].value == 1 && input.bits.length === 1, 'label-danger':input.bits[0].value == 0 && input.bits.length === 1, 'label-default':input.bits.length > 1}">
+                                <span class="input-group-addon noselect normalCursor" style="color: {{input.getColor()}}" ng-mouseenter="input.hover = true" ng-mouseleave="input.hover = false" ng-class="{'pinHovered':input.hover}"><strong>{{input.getName()}}</strong></span>
+                                <span class="input-group-addon button10 noselect" ng-show="input.getBits().length === 1" ng-click="input.value = (input.value + 1) % 2;input.inputChanged(); simulatedChip.inputChanged(input)">1/0</span>
+                                <span class="input-group-addon button10 noselect" ng-show="input.getBits().length > 1" ng-click=""><i class="fa fa-ellipsis-h"></i></span>
+                                <input onClick="this.select();" class="form-control inputForPin" name="input{{$index}}" ng-model="input.value" ng-change="input.inputChanged();simulatedChip.inputChanged(input)" ng-class="{'label-success':input.getBits()[0].getValue() == 1 && input.getBits().length === 1, 'label-danger':input.getBits()[0].getValue() == 0 && input.getBits().length === 1, 'label-default':input.getBits().length > 1}">
                             </div>
                         </div>
                     </div>
@@ -51,8 +51,8 @@
                     <div class="gridsterContent  panel-body">
                         <div class="form-group myFormGroup">
                             <div class="inputs input-group"  ng-repeat="output in simulatedChip.getOutputs() track by $index">
-                                <span class="input-group-addon noselect normalCursor" style="color: {{output.color}}" ng-mouseenter="output.hover = true" ng-mouseleave="output.hover = false" ng-class="{'pinHovered':output.hover}"><strong>{{output.name}}</strong></span>
-                                <input disabled="true" class="form-control inputForPin" name="input{{$index}}" ng-value="output.value"  ng-class="{'label-success':output.value == 1 && output.bits.length === 1, 'label-danger':output.value == 0 && output.bits.length === 1, 'label-default':output.bits.length > 1}">
+                                <span class="input-group-addon noselect normalCursor" style="color: {{output.getColor()}}" ng-mouseenter="output.hover = true" ng-mouseleave="output.hover = false" ng-class="{'pinHovered':output.hover}"><strong>{{output.getName()}}</strong></span>
+                                <input disabled="true" class="form-control inputForPin" name="input{{$index}}" ng-value="output.value"  ng-class="{'label-success':output.value == 1 && output.getBits().length === 1, 'label-danger':output.value == 0 && output.getBits().length === 1, 'label-default':output.getBits().length > 1}">
                             </div>
                         </div>
                     </div>
@@ -69,8 +69,8 @@
                             </thead>
                             <tbody>
                                 <tr ng-repeat="pin in simulatedChip.getInternalPins()" ng-if="!pin.isInOut()" ng-mouseenter="pin.hover = true" ng-mouseleave="pin.hover = false" ng-class="{'pinHovered':pin.hover}">
-                                    <td style="color: {{pin.color}}"><strong>{{pin.name}}</strong></td>
-                                    <td><span class="label myLabel" ng-class="{'label-success':pin.value == 1 && pin.bits.length === 1, 'label-danger':pin.value == 0 && pin.bits.length === 1, 'label-default': pin.bits.length > 1}">{{pin.value}}</span></td>
+                                    <td style="color: {{pin.getColor()}}"><strong>{{pin.getName()}}</strong></td>
+                                    <td><span class="label myLabel" ng-class="{'label-success':pin.value == 1 && pin.getBits().length === 1, 'label-danger':pin.value == 0 && pin.getBits().length === 1, 'label-default': pin.getBits().length > 1}">{{pin.value}}</span></td>
                                     <td style="width: 100%"></td>
                                 </tr>
                             </tbody>
@@ -89,10 +89,10 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="pin in item.part.pins" ng-mouseenter="pin.rightToken.pin.hover = true" ng-mouseleave="pin.rightToken.pin.hover = false" ng-class="{'pinHovered':pin.rightToken.pin.hover}">
-                                    <td>{{pin.name}}</td>
-                                    <td style="color: {{pin.rightToken.pin.color}}"><strong>{{pin.assignment}}</strong></td>
-                                    <td><span class="label myLabel" ng-class="{'label-success':pin.rightToken.pin.value == 1 && pin.rightToken.pin.bits.length === 1, 'label-danger':pin.rightToken.pin.value == 0 && pin.rightToken.pin.bits.length === 1, 'label-default': pin.rightToken.pin.bits.length > 1}">{{pin.rightToken.pin.value}}</span></td>
+                                <tr ng-repeat="pin in item.part.getPins()" ng-mouseenter="pin.getInternalPinToken().getPin().hover = true" ng-mouseleave="pin.getInternalPinToken().getPin().hover = false" ng-class="{'pinHovered':pin.getInternalPinToken().getPin().hover}">
+                                    <td>{{pin.getName()}}</td>
+                                    <td style="color: {{pin.getInternalPinToken().getPin().getColor()}}"><strong>{{pin.getInternalPin().getName()}}</strong></td>
+                                    <td><span class="label myLabel" ng-class="{'label-success':pin.getInternalPinToken().getPin().value == 1 && pin.getInternalPinToken().getPin().getBits().length === 1, 'label-danger':pin.getInternalPinToken().getPin().value == 0 && pin.getInternalPinToken().getPin().getBits().length === 1, 'label-default': pin.getInternalPinToken().getPin().getBits().length > 1}">{{pin.getInternalPin().value}}</span></td>
                                     <td style="width: 100%"></td>
                                 </tr>
                             </tbody>

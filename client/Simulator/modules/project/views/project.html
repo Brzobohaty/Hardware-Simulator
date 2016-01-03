@@ -45,10 +45,10 @@
                         <h4>Chip consists of the following parts:</h4>
                         <ul class="list-group col-md-3">
                             <li class="list-group-item partItem" ng-repeat="part in chip.simulatedChip.getParts()">
-                                <span>{{part.name}}</span>
+                                <span>{{part.getName()}}</span>
                                 <div class="btn-group floatRight">
-                                    <label class="btn btn-primary" ng-disabled="!part.builtInChip || part.builtInChip.error" ng-model="part.builtIn" ng-change="changeChipUsed(part)" uib-btn-radio="true">BuiltIn</label>
-                                    <label class="btn btn-primary" ng-disabled="!part.userChip || part.userChip.error" ng-model="part.builtIn" ng-change="changeChipUsed(part)" uib-btn-radio="false">My</label>
+                                    <label class="btn btn-primary" ng-disabled="!part.getBuiltInChip() || part.getBuiltInChip().getCompilError()" ng-model="part.builtIn" ng-change="changeChipUsed(part)" uib-btn-radio="true">BuiltIn</label>
+                                    <label class="btn btn-primary" ng-disabled="!part.getUserChip() || part.getUserChip().getCompilError()" ng-model="part.builtIn" ng-change="changeChipUsed(part)" uib-btn-radio="false">My</label>
                                 </div>
                             </li>
                         </ul>

@@ -9,96 +9,126 @@ angular.module('app')
          */
         .factory('ChipPartPinModel', [function () {
                 /**
-                 * Object představující jeden vstuní nebo výstupní pin
-                 * @param {String} name název pinu
-                 * @param {object} internalPin interní pin celého chipu, který je napojený na daný vstupn nebo výstup 
-                 * @param {Array} bitsAssigned pole indexů bitů, které jsou tomuto internímu čipu přiřazeny (allow null)
-                 * @param {object} chip kompletní chip
+                 * Object představující jeden vstupní nebo výstupní pin
+                 * @param {String} name jméno pinu
+                 * @param {PinModel} internalPin přiřazený interní pin
+                 * @param {TokenModel} nameToken token názvu pinu
+                 * @param {TokenModel} internalPinToken token přiřezeného interního pinu
+                 * @param {Array}{int} bitsAssigned pole indexů bitů, které jsou přiřazeny tomuto pinu z interního pinu
                  */
-                var Pin = function (name, internalPin, bitsAssigned, chip) {
-                    this.name = name;
-                    this.internalPin = internalPin;
-                    this.bits = []; //jednotlivé bity pinu (BitModel)
-                    this.value; //binární hodnota na pinu
-                    this.bitsAssigned = bitsAssigned; //pole indexů bitů, které jsou tomuto internímu čipu přiřazeny
-                    this.chip = chip;
-                    this.used = true; //indikátor, zda byl tento pin využit
+                var ChipPartPinModel = function (name, internalPin, nameToken, internalPinToken, partt, bitsAssigned) {
+                    /***********************public**************************/
 
-                    //asociace bitů
-                    for (var i = 0; i < this.bitsAssigned.length; i++) {
-                        this.bits.push(this.internalPin.bits[this.bitsAssigned[i]]);
-                    }
+                    /***********************private*************************/
+                    this._name = name; //{String} jméno pinu
+                    this._internalPin = internalPin; //{PinModel} interní pin přiřazený tomuto pinu
+                    this._nameToken = nameToken; //{TokenModel} token názvu pinu
+                    this._internalPinToken = internalPinToken; //{TokenModel} token přiřezeného interního pinu
+                    this._part = partt; //{ChipPartModel} část chipu, kterému náleží tento pin
+                    this._bits = []; //{Array}{BitModel} jednotlivé bity pinu
+                    this._bitsAssigned = bitsAssigned; //{Array}{int} pole indexů bitů, které jsou přiřazeny tomuto pinu z interního pinu
+
+                    /********************************************************/
                 };
-                Pin.prototype = {
+                ChipPartPinModel.prototype = {
+                    /**
+                     * @returns {String} jméno pinu
+                     */
+                    getName: function () {
+                        return this._name;
+                    },
+                    /**
+                     * @returns {TokenModel} token názvu pinu
+                     */
+                    getNameToken: function () {
+                        return this._nameToken;
+                    },
+                    /**
+                     * @returns {TokenModel} token přiřezeného interního pinu
+                     */
+                    getInternalPinToken: function () {
+                        return this._internalPinToken;
+                    },
+                    /**
+                     * @returns {PinModel} interní pin přiřazený tomuto pinu
+                     */
+                    getInternalPin: function () {
+                        return this._internalPin;
+                    },
+                    /**
+                     * @returns {Array}{BitModel} jednotlivé bity pinu
+                     */
+                    getBits: function () {
+                        return this._bits;
+                    },
+                    /**
+                     * Asociuje pouze některé bity z interního bitu s tímto pinem
+                     */
+                    assignBits: function () {
+                        if (this._bits.length === 0) {
+                            for (var i = 0; i < this._bitsAssigned.length; i++) {
+                                this._bits.push(this._internalPin.getBits()[this._bitsAssigned[i]]);
+                            }
+                        }
+                    },
                     /**
                      * Vypočítá hodnoty na výstupních pinech této části obvodu podle hodnot na jejích vstupních pinech
                      */
                     setValues: function () {
-                        if (this.chip.active) {
-//                            this.inputChanged();
-                            if (this.chip.userSimulatedChip) {
-                                //nahrát hodnotu ze vstupních pinů této části do vstupních pinů simulovného čipu
-                                var simInput = this.chip.userSimulatedChip.getInput(this.name);
-                                for (var i = 0; i < this.bits.length; i++) {
-                                    simInput.bits[i].value = this.bits[i].value;
-                                }
-                                //simInput.value = this.internalPin.value;
-                                this.chip.userSimulatedChip.inputChanged(simInput);
-
-                                //nahrát hodnotu výstupních pinů simulovného čipu do výstupních pinů této části
-                                var simOutputs = this.chip.userSimulatedChip.outputs;
-                                for (var index in simOutputs) {
-                                    var output = this.chip.outputs[simOutputs[index].name];
-                                    var simOutput = simOutputs[index];
-                                    for (var i = 0; i < output.bits.length; i++) {
-                                        output.bits[i].value = simOutput.bits[i].value;
-                                    }
-                                }
-                            } else {
-                                this.chip._compute();
-                            }
-                            this.chip.runOutputCallbacks();
+                        if (this._part.getBuiltInChip().isActive()) {
+                            this._setValues(this._part.getBuiltInChip());
+                        } else {
+                            this._setValues(this._part.getUserChip());
                         }
                     },
                     /**
-                     * Vstup byl změněn a tudíž v této metodě dojde k 
-                     * přeformátování bitů na jednu binátní hodnotu
+                     * Nastaví bitům příslušného interního pinu sebe jako callback pro případ, že je nějaký z těchto bitů změněn.
                      */
-//                    inputChanged: function () {
-//                        var string = '';
-//                        for (var index in this.bitsAssigned) {
-//                            string += Number(this.internalPin.bits[this.bitsAssigned[index]].value);
-//                        }
-//                        this.value = Number(string);
-//                    },
-                    /**
-                     * Výstup byl změněn a tudíž v této metodě dojde k 
-                     * přeformátování hodnoty do konkrétních bitů pinu
-                     */
-//                    _outputChanged: function () {
-//                        if (typeof this.value != 'undefined') {
-//                            var bitss = this.value.toString().split('');
-//                            for (var index in this.bitsAssigned) {
-//                                this.internalPin.bits[this.bitsAssigned[index]].value = Number(bitss[this.bitsAssigned[index]]);
-//                            }
-//                            debugger;
-//                        }
-//                    },
                     setCallbacks: function () {
-                        for (var index in this.internalPin.bits) {
-                            this.internalPin.bits[index].callbacks.push(this);
+                        for (var index in this._internalPin.getBits()) {
+                            this._internalPin.getBits()[index].addCallback(this);
                         }
                     },
+                    /**
+                     * Zavolá všechny callbacky napojené na tento pin
+                     */
                     runOutputCallbacks: function () {
-//                        this._outputChanged();
-                        for (var index in this.internalPin.bits) {
-                            for (var index2 in this.internalPin.bits[index].callbacks) {
-                                this.internalPin.bits[index].callbacks[index2].setValues();
-                            }
+                        for (var index in this._internalPin.getBits()) {
+                            this._internalPin.getBits()[index].runCallbacks();
                         }
-                        this.internalPin.outputChanged();
+                        this._internalPin.outputChanged();
+                    },
+                    /***********************private**************************/
+
+                    /**
+                     * Vypočítá hodnoty na výstupních pinech této části obvodu podle hodnot na jejích vstupních pinech
+                     * @param {ChipSimulatedPartModel} part simulovatelná část, pro kterou se má výpočet provést
+                     */
+                    _setValues: function (part) {
+                        if (part.getUserSimulatedChip()) {
+                            //nahrát hodnotu ze vstupních pinů této části do vstupních pinů simulovného čipu
+                            var simInput = part.getUserSimulatedChip().getInput(this._name);
+                            for (var i = 0; i < this._bits.length; i++) {
+                                simInput.getBits()[i].setValue(this._bits[i].getValue());
+                            }
+
+                            part.getUserSimulatedChip().inputChanged(simInput);
+
+                            //nahrát hodnotu výstupních pinů simulovaného čipu do výstupních pinů této části
+                            var simOutputs = part.getUserSimulatedChip().getOutputs();
+                            for (var index in simOutputs) {
+                                var output = part.getOutputs()[simOutputs[index].getName()];
+                                var simOutput = simOutputs[index];
+                                for (var i = 0; i < output.getBits().length; i++) {
+                                    output.getBits()[i].setValue(simOutput.getBits()[i].getValue());
+                                }
+                            }
+                        } else {
+                            part.compute();
+                        }
+                        part.runOutputCallbacks();
                     }
                 };
 
-                return Pin;
+                return ChipPartPinModel;
             }]);

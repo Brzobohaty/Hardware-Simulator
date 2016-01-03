@@ -3,7 +3,7 @@
 angular.module('app.project')
 
         /**
-         * Přihlášení uživatele
+         * Spravování projektu (Nahrávání chipů, volbu simulace)
          */
         .controller('ProjectController', ['$scope', '$rootScope', 'ChipsService', function ($scope, $rootScope, ChipsService) {
                 $rootScope.page = 'project';
@@ -14,12 +14,12 @@ angular.module('app.project')
                 $scope.changeChipUsed = changeChipUsed;
 
                 function changeChipUsed(part) {
-                    if (part.builtIn === 'true') {
-                        part.builtInChip.active = true;
-                        part.userChip.active = false;
+                    if (part.builtIn) {
+                        part.getBuiltInChip().activate();
+                        part.getUserChip().deactivate();
                     } else {
-                        part.builtInChip.active = false;
-                        part.userChip.active = true;
+                        part.getBuiltInChip().deactivate();
+                        part.getUserChip().activate();
                     }
                     ChipsService.getSimulatedChip().simulatedChip.reComputeAll();
                 }

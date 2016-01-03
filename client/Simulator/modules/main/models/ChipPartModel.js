@@ -7,115 +7,111 @@ angular.module('app')
         /**
          * Představuje object části chipu
          */
-        .factory('ChipPart', ['ChipPartPinModel', function (ChipPartPinModel) {
+        .factory('ChipPartModel', ['ChipPartPinModel', function (ChipPartPinModel) {
                 /**
-                 * Object představující jeden chip
-                 * @param {String} name
-                 * @param {object} inputs obsahuje pouze proměnné, které představují hodnoty na vstupu 
-                 * @param {object} outputs obsahuje pouze proměnné, které představují hodnoty na výstupu
-                 * @param {function} computeFcn
+                 * Object představující část chipu
+                 * @param {string} partName název chipu
+                 * @param {TokenModel} nameToken token názvu chipu
+                 * @param {Array} partRow řádek na kterém je název tohoto chipu
+                 * @param {int} id této části chipu
                  */
-                var Chip = function (name, inputs, outputs, computeFcn, userSimulatedChip) {
-                    this.name = name; //jméno chipu
-                    this.inputs = inputs;
-                    this.outputs = outputs;
-                    this.active = false; //indikátor, zda je tato část obvud používána při výpočtu
-                    this.error; //indikátor, že nastal compile error
-                    if (userSimulatedChip && !computeFcn) {
-                        this.userSimulatedChip = userSimulatedChip;
-                    } else {
-                        this._compute = computeFcn; //výpočetní funkce chipu
-                    }
+                var ChipPartModel = function (partName, nameToken, partRow, id) {
+                    /***********************public**************************/
+                    this.builtIn; //{boolean} příznak, zda je právě používána buildIn verze tohot chipu
+
+                    /***********************private*************************/
+                    this._id = id; //{int} id této části chipu
+                    this._name = partName; //{string} název chipu
+                    this._nameToken = nameToken; //{TokenModel} token názvu chipu
+                    this._row = partRow; //{Array} řádek na kterém je název tohoto chipu
+                    this._pins = {}; //{Map}{pinName:ChipPartPinModel} piny této části obvodu
+                    this._builtInChip; //{ChipSimulatedPartModel} simulovatelná vestavěná část chipu
+                    this._userChip; //{ChipSimulatedPartModel} simulovatelná část chipu od uživatele
+
+                    /********************************************************/
+                    nameToken.setPartId(id);
                 };
-                Chip.prototype = {
+                ChipPartModel.prototype = {
+                    /************************public*************************/
                     /**
-                     * Asociuje interní piny obvodu s piny tohoto chipu
-                     * @param {Object} internalPins mapa interních pinů obvodu
-                     * @param {Object} part chip předtavující část obvodu
-                     * @param {ChipModel} chip hlavní chip jehož je tento částí
-                     * @return {Boolean} false pokud nastala chyba při kompilaci
+                     * @returns {int} id této části chipu
                      */
-                    setPins: function (internalPins, part, chip) {
-                        for (var pinName in part.pins) {
-                            if (this.inputs.hasOwnProperty(pinName)) {
-                                this.inputs[pinName] = new ChipPartPinModel(pinName, internalPins[part.pins[pinName].assignment], part.pins[pinName].bitsAssigned, this);
-                                part.pins[pinName].internalPin = internalPins[part.pins[pinName].assignment];
-                                part.pins[pinName].rightToken.pin = internalPins[part.pins[pinName].assignment];
-                            } else if (this.outputs.hasOwnProperty(pinName)) {
-                                this.outputs[pinName] = new ChipPartPinModel(pinName, internalPins[part.pins[pinName].assignment], part.pins[pinName].bitsAssigned, this);
-                                part.pins[pinName].internalPin = internalPins[part.pins[pinName].assignment];
-                                part.pins[pinName].rightToken.pin = internalPins[part.pins[pinName].assignment];
-                            } else {
-                                var errMes = 'Part "' + part.name + '" hasn\'t pin called "' + pinName + '"';
-                                part.pins[pinName].leftToken.setErrorMes(errMes);
-                                chip.setCompileError(part.row + 1, errMes);
-                                this.error = true;
-                                return false;
-                            }
-                        }
-                        var missingPin = this._allUsed();
-                        if (!missingPin) {
-                            this._setListener();
-                            this.error = false;
-                            return true;
-                        } else {
-                            var errMes = 'Not used all pins! Is missing pin "' + missingPin + '"';
-                            part.nameToken.setErrorMes(errMes);
-                            chip.setCompileError(part.row + 1, errMes);
-                            this.error = true;
+                    getId: function () {
+                        return this._id;
+                    },
+                    /**
+                     * @returns {Map}{pinName:ChipPartPinModel} piny této části obvodu
+                     */
+                    getPins: function () {
+                        return this._pins;
+                    },
+                    /**
+                     * @returns {string} id této části chipu
+                     */
+                    getName: function () {
+                        return this._name;
+                    },
+                    /**
+                     * @returns {TokenModel} token názvu chipu
+                     */
+                    getNameToken: function () {
+                        return this._nameToken;
+                    },
+                    /**
+                     * @returns {Array} řádek na kterém je název tohoto chipu
+                     */
+                    getRow: function () {
+                        return this._row;
+                    },
+                    /**
+                     * @returns {ChipSimulatedPartModel} simulovatelná vestavěná část chipu
+                     */
+                    getBuiltInChip: function () {
+                        return this._builtInChip;
+                    },
+                    /**
+                     * @returns {ChipSimulatedPartModel} simulovatelná část chipu od uživatele
+                     */
+                    getUserChip: function () {
+                        return this._userChip;
+                    },
+                    /**
+                     * Přidá pin této části obvodu.
+                     * @param {string} name název části
+                     * @param {PinModel} internalPin interní pin přiřazený tomuto pinu 
+                     * @param {TokenModel} nameToken token názvu pinu
+                     * @param {TokenModel} internalPinToken token přiřezeného pinu
+                     * @param {Array}{int} bitsAssigned pole indexů bitů, které jsou přiřazeny tomuto pinu z interního pinu
+                     * @returns {Boolean} false pokud pin se stejným názvem již přiřazen byl
+                     */
+                    addPin: function (name, internalPin, nameToken, internalPinToken, bitsAssigned) {
+                        if (this._pins.hasOwnProperty(name)) {
                             return false;
                         }
+                        this._pins[name] = new ChipPartPinModel(name, internalPin, nameToken, internalPinToken, this, bitsAssigned);
+                        return true;
                     },
                     /**
-                     * Nastaví listener pro vstupy tohoto obvodu 
-                     * (při každé změně vstupu vypočítá hodnotu na výstupu)
+                     * Asociuje logiku simulovatelného chipu od uživatele s touto částí obvodu
+                     * @param {ChipSimulatedPartModel} simulatedChip simulovatelný chip
+                     * @param {ChipModel} chip hlavní chip jehož je tento částí
                      */
-                    _setListener: function () {
-                        for (var inputName in this.inputs) {
-                            this.inputs[inputName].setCallbacks();
-                        }
+                    setUserChip: function (simulatedChip, chip) {
+                        this._userChip = simulatedChip;
+                        this._userChip.setPins(this._pins, this._nameToken, this._row, this._name, chip);
                     },
                     /**
-                     * Zavolá callbacky napojené na výstupní pin
+                     * Asociuje logiku vestavěného simulovatelného chipu s touto částí obvodu
+                     * @param {ChipSimulatedPartModel} simulatedChip simulovatelný chip
+                     * @param {ChipModel} chip hlavní chip jehož je tento částí
                      */
-                    runOutputCallbacks: function () {
-                        for (var outputName in this.outputs) {
-                            this.outputs[outputName].runOutputCallbacks();
-                        }
-                    },
-                    /**
-                     * Zkontroluje zda mají všechny piny příznak "used" na true respektive, zda byly použity
-                     * @returns {String} název pinu, který nebyl využit nebo false pokud jsou všechny piny použity
-                     */
-                    _allUsed: function () {
-                        for (var pinName in this.inputs) {
-                            if (!this.inputs[pinName].used) {
-                                return pinName;
-                            }
-                        }
-                        for (var pinName in this.outputs) {
-                            if (!this.outputs[pinName].used) {
-                                return pinName;
-                            }
-                        }
-                        return false;
-                    },
-                    /**
-                     * Přepočítá hodnoty na výstupu podle aktuálních hodnot na vstupu.
-                     */
-                    reCompute: function () {
-//                        for (var inputName in this.inputs) {
-//                            this.inputs[inputName].inputChanged();
-//                        }
-                        
-                        if (this.userSimulatedChip && !this._compute) {
-                            this.userSimulatedChip.reComputeAll();
-                        } else {
-                            this._compute();
-                        }
-                        this.runOutputCallbacks();
+                    setBuiltInChip: function (simulatedChip, chip) {
+                        this._builtInChip = simulatedChip;
+                        this._builtInChip.setPins(this._pins, this._nameToken, this._row, this._name, chip);
                     }
+
+                    /***********************private**************************/
                 };
 
-                return Chip;
+                return ChipPartModel;
             }]);

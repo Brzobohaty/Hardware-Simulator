@@ -25,6 +25,28 @@ angular.module('app.simulator')
                     $scope.renderErrorsFromRow = renderErrorsFromRow;
                     $scope.showPart = showPart;
                     $scope.closeGrid = closeGrid;
+                    $scope.gridMouseEnter = gridMouseEnter;
+                    $scope.gridMouseLeave = gridMouseLeave;
+                }
+                
+                /**
+                 * Nastaví hover pro token
+                 * @param {TokenModel} nameToken
+                 */
+                function gridMouseEnter(nameToken){
+                    if(nameToken){
+                        nameToken.hover = true;
+                    }
+                }
+                
+                /**
+                 * Zruší hover pro token
+                 * @param {TokenModel} nameToken
+                 */
+                function gridMouseLeave(nameToken){
+                    if(nameToken){
+                        nameToken.hover = false;
+                    }
                 }
 
                 /**
@@ -59,16 +81,16 @@ angular.module('app.simulator')
                     //openedParts.splice(openedParts.indexOf(item.part.id), 1);
                     //$scope.standardItems.splice($scope.standardItems.indexOf(item), 1);
                     item.active = false;
-                    item.part.nameToken.hover = false;
+                    item.part.getNameToken().hover = false;
                 }
 
                 /**
                  * Vytvoří okna pro stavy pinů jednotlivých částí obvodu
                  */
                 function _makePartsWindows() {
-                    var parts = $scope.simulatedChip.getParts()
+                    var parts = $scope.simulatedChip.getParts();
                     for (var key in parts) {
-                        $scope.standardItems.push({sizeX: 1, sizeY: 1, name: 'Part pins', active: false, partId: parts[key].id, part: parts[key]});
+                        $scope.standardItems.push({sizeX: 1, sizeY: 1, name: 'Part pins', active: false, partId: parts[key].getId(), part: parts[key]});
                     }
                 }
 

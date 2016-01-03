@@ -15,7 +15,6 @@ angular.module('app')
                 var _notTokenRegex = /^<span class=.*<\/span>$|\s+|\n/; //regex pro komentáře a bílé znaky
                 var _nameRegex = /^[A-Za-z][A-Za-z0-9]*$/; //regex pro názvy chipů a pinů
                 var _numberRegex = /^[0-9]*$/; //regex pro čísla
-                var _partId = 0; //{int} čítač id částí obvodu
                 var _chip; //{ChipModel} Obecná obálka chipu
                 var _scope;
                 var _chips; //{ChipModel} seznam všech nahraných chipů v aplikaci
@@ -41,7 +40,6 @@ angular.module('app')
                 function compile(chipp, scopee) {
                     _currentRow = 0;
                     _currentTokenOnRow = 0;
-                    _partId = 0;
                     _chip = chipp;
                     PinModel.restartColors();
                     _simulatedChip = new SimulatedChipModel();
@@ -187,29 +185,22 @@ angular.module('app')
                  * @return {boolean} false pokud nastala chyba při kompilaci
                  */
                 function expectPart() {
-                    var chip =
-                            {
-                                'id': ++_partId,
-                                'name': '',
-                                'pins': {},
-                                'nameToken': _curToken,
-                                'row': _currentRow
-                            };
-                    _curToken.partId = _partId;
-                    if (!(chip.name = expectChipName())) {
+                    var partName;
+                    if (!(partName = expectChipName())) {
                         return false;
                     }
+                    var part = _simulatedChip.addPart(partName, _curToken, _currentRow);
                     _next();
                     if (!expectChar('(')) {
                         return false;
                     }
                     _next();
-                    if (!expectPinAssignment(chip)) {
+                    if (!expectPinAssignment(part)) {
                         return false;
                     }
                     while (_curToken.getContent() === ',') {
                         _next();
-                        if (!expectPinAssignment(chip)) {
+                        if (!expectPinAssignment(part)) {
                             return false;
                         }
                     }
@@ -220,25 +211,20 @@ angular.module('app')
                     if (!expectChar(';')) {
                         return false;
                     }
-                    _simulatedChip.addPart(chip);
                     return true;
                 }
 
                 /**
                  * Zkontroluje, zda následující sekvence tokenů představuje přiřazení pinů.
                  * Pokud ne, tak uloží do tokenu chybovou hlášku.
-                 * @param {object} chip definice chipu
+                 * @param {ChipPartModel} part definice chipu
                  * @return {boolean} false pokud nastala chyba při kompilaci
                  */
-                function expectPinAssignment(chip) {
+                function expectPinAssignment(part) {
                     var pinNameLeft;
                     var pinRight;
                     var leftToken = _curToken;
                     if (!(pinNameLeft = expectPinName())) {
-                        return false;
-                    }
-                    if (chip.pins.hasOwnProperty(pinNameLeft)) {
-                        _curToken.setErrorMes('"' + pinNameLeft + '" pin occurs again');
                         return false;
                     }
                     _next();
@@ -250,13 +236,10 @@ angular.module('app')
                     if (!(pinRight = expectInternalPin())) {
                         return false;
                     }
-                    chip.pins[pinNameLeft] = {
-                        'name': pinNameLeft,
-                        'assignment': pinRight.getName(),
-                        'bitsAssigned': pinRight.bitsAssigned,
-                        'leftToken': leftToken,
-                        'rightToken': rightToken
-                    };
+                    if (!part.addPin(pinNameLeft, pinRight, leftToken, rightToken, pinRight.getBitsAssigned())) {
+                        leftToken.setErrorMes('"' + pinNameLeft + '" pin occurs again');
+                        return false;
+                    }
                     return true;
                 }
 
@@ -287,7 +270,8 @@ angular.module('app')
                         _next();
                     }
                     var pin = new PinModel(pinName, pinBitSize, null, type);
-                    _simulatedChip.addPin(pin, tokenOfPin);
+                    var internalPin = _simulatedChip.addPin(pin);
+                    tokenOfPin.setPin(internalPin);
                     return pin;
                 }
 
@@ -320,8 +304,10 @@ angular.module('app')
                         bitsAssigned.push(0);
                     }
                     var pin = new PinModel(pinName, pinBitSize, bitsAssigned);
-                    _simulatedChip.addPin(pin, tokenOfPin);
-                    return pin;
+                    var internalPin = _simulatedChip.addPin(pin);
+                    tokenOfPin.setPin(internalPin);
+                    internalPin.setBitsAssigned(bitsAssigned);
+                    return internalPin;
                 }
 
                 /**
@@ -404,7 +390,7 @@ angular.module('app')
                  * Vypočítání compilačního postupu v procentech
                  */
                 function _calcProgress() {
-                    _chip.progress = _currentRow / (_tokens.length / 100);
+                    _chip.setProgress(_currentRow / (_tokens.length / 100));
                     if (_scope) {
                         if (!_scope.$$phase) {
                             _scope.$apply();
