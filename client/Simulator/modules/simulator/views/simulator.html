@@ -92,7 +92,7 @@
                                 <tr ng-repeat="pin in item.part.getPins()" ng-mouseenter="pin.getInternalPinToken().getPin().hover = true" ng-mouseleave="pin.getInternalPinToken().getPin().hover = false" ng-class="{'pinHovered':pin.getInternalPinToken().getPin().hover}">
                                     <td>{{pin.getName()}}</td>
                                     <td style="color: {{pin.getInternalPinToken().getPin().getColor()}}"><strong>{{pin.getInternalPin().getName()}}</strong></td>
-                                    <td><span class="label myLabel" ng-class="{'label-success':pin.getInternalPinToken().getPin().value == 1 && pin.getInternalPinToken().getPin().getBits().length === 1, 'label-danger':pin.getInternalPinToken().getPin().value == 0 && pin.getInternalPinToken().getPin().getBits().length === 1, 'label-default': pin.getInternalPinToken().getPin().getBits().length > 1}">{{pin.getInternalPin().value}}</span></td>
+                                    <td><span class="label myLabel" ng-class="{'label-success':pin.getValue() == 1 && pin.getBits().length === 1, 'label-danger':pin.getValue() == 0 && pin.getBits().length === 1, 'label-default': pin.getBits().length > 1}">{{pin.getValue()}}</span></td>
                                     <td style="width: 100%"></td>
                                 </tr>
                             </tbody>

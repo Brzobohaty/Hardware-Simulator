@@ -27,10 +27,17 @@ angular.module('app')
                     this._part = partt; //{ChipPartModel} část chipu, kterému náleží tento pin
                     this._bits = []; //{Array}{BitModel} jednotlivé bity pinu
                     this._bitsAssigned = bitsAssigned; //{Array}{int} pole indexů bitů, které jsou přiřazeny tomuto pinu z interního pinu
+                    this._value; //{int} binární hodnota složena z bitů, které jsou tomuto pinu přiřazeny
 
                     /********************************************************/
                 };
                 ChipPartPinModel.prototype = {
+                    /**
+                     * @returns {int} binární hodnota složena z bitů, které jsou tomuto pinu přiřazeny
+                     */
+                    getValue: function () {
+                        return this._value;
+                    },
                     /**
                      * @returns {String} jméno pinu
                      */
@@ -70,6 +77,7 @@ angular.module('app')
                                 this._bits.push(this._internalPin.getBits()[this._bitsAssigned[i]]);
                             }
                         }
+                        this._bitsChanged();
                     },
                     /**
                      * Vypočítá hodnoty na výstupních pinech této části obvodu podle hodnot na jejích vstupních pinech
@@ -80,6 +88,7 @@ angular.module('app')
                         } else {
                             this._setValues(this._part.getUserChip());
                         }
+                        this._bitsChanged();
                     },
                     /**
                      * Nastaví bitům příslušného interního pinu sebe jako callback pro případ, že je nějaký z těchto bitů změněn.
@@ -97,7 +106,9 @@ angular.module('app')
                             this._internalPin.getBits()[index].runCallbacks();
                         }
                         this._internalPin.outputChanged();
+                        this._bitsChanged();
                     },
+                    
                     /***********************private**************************/
 
                     /**
@@ -127,6 +138,18 @@ angular.module('app')
                             part.compute();
                         }
                         part.runOutputCallbacks();
+                    },
+                    
+                    /**
+                     * Hodnoty byly změněny a tudíž v této metodě dojde k 
+                     * přeformátování bitů pinu do jedné binární hodnoty
+                     */
+                    _bitsChanged: function () {
+                        var string = '';
+                        for (var index in this._bits) {
+                            string += Number(this._bits[index].getValue());
+                        }
+                        this._value = string;
                     }
                 };
 

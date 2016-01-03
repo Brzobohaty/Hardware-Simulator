@@ -162,6 +162,6 @@ angular.module('app')
                         addChip(testchips[i].fileName, testchips[i].plainText, {$apply: function () {}});
                     }
                     
-                    simulatedChipIndex = 1;
+                    simulatedChipIndex = 7;
                 }
             }]);
